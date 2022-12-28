@@ -37,11 +37,11 @@ Thor Brigsted (Siccity) - http://thorbrigsted.com
 xNode on GitHub - https://github.com/Siccity/xNode
 xNode Unity Forum - https://forum.unity.com/threads/xnode-a-general-purpose-node-editor.502354/
 BrainShack's xNode Tutorial - https://www.youtube.com/@brainshack9077/search?query=simple%20dialog
-Harrison Gowland's xNode Tutorial - https://www.youtube.com/c/HarrisonGowland/search?query=XNode 
+Harrison Gowland's xNode Tutorial - https://www.youtube.com/c/HarrisonGowland/search?query=XNode
 Unity Platform - https://unity.com
 
 I hope you enjoy using Ren'Py Maker and find it useful for creating very advanced visual novels in Ren'Py.
-- Alan Baylis
+    Alan Baylis
  
 "We shall change the face of Arrakis."
-- Dune (1984)
+    Dune (1984)
