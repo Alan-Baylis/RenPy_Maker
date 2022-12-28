@@ -2,7 +2,7 @@
 Ren'Py Maker allows you to create a visual novel for Ren'Py (renpy.org) within the Unity editor. You can add dialogs, pictures, music and sounds by adding nodes to a visual graph. Ren'Py Maker has all you need to make your own visual novel easily and quickly. Ren'Py Maker also supports menus, labels, and jumps to make a fully dynamic novel that allows for branching based on the reader's choices. You can even test and build your novel in Unity!
 
 
-![Screenshot](/repository/RenPy_Maker/Assets/Artwork/screenshot.png?raw=true "Ren'Py Maker Screenshot")
+![Screenshot](/repository/Assets/Artwork/screenshot.png?raw=true "Ren'Py Maker Screenshot")
 
 
 You can find more information and the online tutorials here at https://www.RenPyMaker.com
