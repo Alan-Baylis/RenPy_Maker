@@ -8,6 +8,7 @@ Ren'Py Maker allows you to create a visual novel for Ren'Py (renpy.org) within t
 You can find more information and the online tutorials here at https://www.RenPyMaker.com
 
 
+
 Ren'Py is a very complex scripting language and creating a full set of nodes and advanced features will take time. If you would like to get access to the full version of Ren'Py Maker as it is being made and also help support the development of the program then you can subscribe to my Patreon channel.
 https://www.patreon.com/user?u=9912327
 
@@ -38,6 +39,7 @@ Convert Ren'Py script to Ren'Py Maker graph
 Library of routines for common transitions and effects
 
 
+
 Ren'Py Maker has been released for free with full source code in gratitude to Thor Brigsted, the author of xNode, who released his fantastic node editor for free. And as a big thank you to a couple of great xNode tutorials released on YouTube, as well as to the authors of Unity itself. Each of which allowed me to make this software.
 
 
@@ -56,8 +58,10 @@ Harrison Gowland's xNode Tutorial - https://www.youtube.com/c/HarrisonGowland/se
 Unity Platform - https://unity.com
 
 
+
 I hope you enjoy using Ren'Py Maker and find it useful for creating very advanced visual novels in Ren'Py.
 --- Alan Baylis
+ 
  
 "We shall change the face of Arrakis."
 --- Dune (1984)
