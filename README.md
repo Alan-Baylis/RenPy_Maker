@@ -14,28 +14,28 @@ https://www.patreon.com/user?u=9912327
 
 
 Planned features for the full version of Ren'Py Maker:
-Node grouping with custom colors
-Inventory system
-Image maps
-Hidden objects/collectables
-Full preferences
-Event history
-Animations
-Statistics
-Auto layout
-Disable button to temporarily hide nodes
-Advanced error/logic checking
-Dynamic help/tooltips
-Multi nodes combining Scene, Show and Dialog
+Node grouping with custom colors,
+Inventory system,
+Image maps,
+Hidden objects/collectables,
+Full preferences,
+Event history,
+Animations,
+Statistics,
+Auto layout,
+Disable button to temporarily hide nodes,
+Advanced error/logic checking,
+Dynamic help/tooltips,
+Multi nodes combining Scene, Show and Dialog,
 Language selection
 
 
 Planned features for the Ren'Py Maker Pro version:
-Export all to Ren'Py project option
-Image library for inventory (Drag & Drop)
-Daz3D and Unity scene creator
-Full GUI customization
-Convert Ren'Py script to Ren'Py Maker graph
+Export all to Ren'Py project option,
+Image library for inventory (Drag & Drop),
+Daz3D and Unity scene creator,
+Full GUI customization,
+Convert Ren'Py script to Ren'Py Maker graph,
 Library of routines for common transitions and effects
 
 
