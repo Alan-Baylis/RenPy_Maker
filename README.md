@@ -60,7 +60,8 @@ Unity Platform - https://unity.com
 
 
 I hope you enjoy using Ren'Py Maker and find it useful for creating very advanced visual novels in Ren'Py.
---- Alan Baylis
+
+Alan Baylis
  
  
 "We shall change the face of Arrakis."
