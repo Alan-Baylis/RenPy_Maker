@@ -99,7 +99,7 @@ namespace XNodeEditor
             
             if (rect.Contains(Event.current.mousePosition))
             {
-                //NodeEditorWindow.current.MoveNodeToTop(_dialogNode);
+                //NodeEditorWindow.current.MoveNodeToTop(_dialogueNode);
                 GUI.Label(new Rect(4, rect.y + 18, 200, 100),
                     new GUIContent("", (Texture2D)property.objectReferenceValue));
             }

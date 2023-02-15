@@ -442,7 +442,7 @@ public class RenpyMaker : NodeGraph
 		// Create the side images
 		foreach (BaseNode n in nodes)
 		{
-			if (n.GetNodeType() == "CharacterNode" || n.GetNodeType() == "DialogNode" || n.GetNodeType() == "DynamicNode" || n.GetNodeType() == "NarrateNode")
+			if (n.GetNodeType() == "CharacterNode" || n.GetNodeType() == "DialogueNode" || n.GetNodeType() == "DynamicNode" || n.GetNodeType() == "NarrateNode")
 			{
 				list.Add("image " + n.GetImage().name.Replace("_"," ").ToLower()+ " = \"" + n.GetImage().name.ToLower() + ".png\"");
 			}
@@ -560,13 +560,13 @@ public class RenpyMaker : NodeGraph
 		bool found = false;
 		foreach (BaseNode n in nodes)
 		{
-			if (n.GetNodeType() == "DialogNode" || n.GetNodeType() == "DynamicNode")
+			if (n.GetNodeType() == "DialogueNode" || n.GetNodeType() == "DynamicNode")
 				found = true;
 		}
 
 		if (!found)
 		{
-			Debug.LogError("You need to add at least one Dialog or Dynamic node");
+			Debug.LogError("You need to add at least one Dialogue or Dynamic node");
 			return true;
 		}
 
