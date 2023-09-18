@@ -1616,7 +1616,7 @@ MonoBehaviour:
   - {fileID: 5760792066695276592}
   - {fileID: -4431498515541420563}
   - {fileID: 5655520759729595626}
-  current: {fileID: 4225049766724601468}
+  current: {fileID: 6253473114169255042}
 --- !u!114 &929469642235608109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2772,9 +2772,9 @@ MonoBehaviour:
       _dynamic: 0
   entry: 0
   enabled: 1
-  dialogue: We used a Dynamic node to ask the previous question. This is a special
-    node that creates a menu and allows you to add multiple outputs, each of which
-    will have its own button.
+  dialogue: We used a Menu node to ask the previous question. This is a special node
+    that creates a menu and allows you to add multiple outputs, each of which will
+    have its own button.
   character: Cindy
   image: {fileID: 2800000, guid: 86f1faac6c226f047bdc42f74d334ea0, type: 3}
   color: {r: 1, g: 0.027450982, b: 0, a: 1}
