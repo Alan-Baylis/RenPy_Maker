@@ -1,6 +1,23 @@
-# Made with Ren'Py Maker Lite
+# Made with Ren'Py Maker
 # By Alan Baylis
 # https://www.renpymaker.com
+
+# 3 Character Nodes
+
+init python:
+    class Characters:
+        def __init__(self, name: str, color: str):
+            self.name = name
+            self.color = color
+
+# Character variables
+    CharacterList = []
+    Cindy = Characters("Cindy", "RGBA(1.000, 0.027, 0.000, 1.000)")
+    CharacterList.append(Cindy)
+    Michael = Characters("Michael", "RGBA(0.961, 1.000, 0.000, 1.000)")
+    CharacterList.append(Michael)
+    Lucy = Characters("Lucy", "RGBA(1.000, 0.000, 0.841, 1.000)")
+    CharacterList.append(Lucy)
 
 define Cindy_ = Character("Cindy", image="cindy", color="#ff0700")
 define Michael_ = Character("Michael", image="michael", color="#f5ff00")
@@ -88,22 +105,22 @@ menu:
     Cindy_ "Would you like to listen to some music?"
 
     "Yes, thank you":
-        jump Yes
+        jump Yes_60
 
     "No thanks":
-        jump No
+        jump No_60
 
-label Yes:
+label Yes_60:
 
     play sound "audio/guitar.mp3"
 
-label No:
+label No_60:
 
     hide cindy chuckle
 
-    jump Destination_0
+    jump destination_0
 
-label Destination_0:
+label destination_0:
 
     show cindy smile at center
 
