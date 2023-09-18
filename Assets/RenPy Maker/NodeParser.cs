@@ -1,10 +1,16 @@
+using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using UnityEngine.InputSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 using XNode;
+using Button = UnityEngine.UI.Button;
+using Image = UnityEngine.UI.Image;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -13,6 +19,10 @@ using XNodeEditor;
 
 public class NodeParser : MonoBehaviour
 {
+    private List<BaseNode> nodeStack = new List<BaseNode>();
+    private List<RenpyMaker> graphStack = new List<RenpyMaker>();
+
+    public string projectName = "";
     public Color speakerColor;
     public TMP_Text speaker;
     public TMP_Text dialogue;
@@ -24,7 +34,7 @@ public class NodeParser : MonoBehaviour
     public RenpyMaker graph;
     [HideInInspector]
     public int _resolutionIndex;
-    private List<string> resolutions = new List<string> {"1066x600", "1280x720", "1920x1080"};
+    private List<string> resolutions = new List<string> {"1066x600", "1280x720", "1920x1080", "2560x1440", "3840x2160"};
     private List<Texture2D> _textures = new List<Texture2D>();
     private List<string> _positions = new List<string>();
     private Queue<AudioClip> clipQueue = new Queue<AudioClip>();
@@ -33,7 +43,7 @@ public class NodeParser : MonoBehaviour
     private Texture2D _sceneTexture;
     private Texture2D _showTexture;
     private Coroutine _parser;
-    
+
 #if UNITY_EDITOR
     private NodeEditorWindow _window;
 #endif
@@ -41,8 +51,9 @@ public class NodeParser : MonoBehaviour
     public void Awake()
     {
 #if UNITY_EDITOR
-        _window = (NodeEditorWindow)EditorWindow.GetWindow(typeof(NodeEditorWindow), true, "Ren'Py Maker");
+        _window = (NodeEditorWindow)EditorWindow.GetWindow(typeof(NodeEditorWindow), false, "Ren'Py Maker");
         _window.titleContent.text = "Ren'Py Maker";
+        _window.wantsMouseMove = true;
         _window.Show();
 #endif
     }
@@ -98,105 +109,288 @@ public class NodeParser : MonoBehaviour
     
     public void TestArea()
     {
-/*        
-        // Resize Image 
-        GameObject image = GameObject.Find("Ren'Py Maker Canvas/Image");
-        if (image != null)
-        {
-            Vector3 scale = new Vector3(3.0f, 3.0f, 1.0f);
-            image.transform.localScale = scale;
-            Vector3 pos = image.transform.position;
-            pos.y = 150.0f;
-            image.transform.position = pos;
-        }
-*/
-/*        
-        // Changing the Sprite from a file in the Assets folder
-        byte[] data = File.ReadAllBytes(Path.GetFullPath("Assets/RenpyMaker/Images/side_lucy.png"));
-        Texture2D texture = new Texture2D(300, 300, TextureFormat.ARGB32, false);
-        texture.LoadImage(data);
-        speakerImage.overrideSprite = Sprite.Create(texture, new Rect(0,0, texture.width, texture.height),new Vector2(0.5f, 0.5f),100);
-*/
-        // Changing an Image's position and scale
+    }
+
+    public void OnDestroy()
+    {
     }
 
     public void Start()
     {
-#if UNITY_EDITOR
         TestArea();
-        
+
         if (graph.ErrorCheck())
             return;
-
+        
         graph.current = null;
         
-        if (Selection.count == 1)
+#if UNITY_EDITOR
+        if (Selection.count == 1) // Try to start from selected node
         {
-            // Get start node if there is only one node selected and it is in graph.nodes
             List<UnityEngine.Object> selectionCache;
             selectionCache = new List<UnityEngine.Object>(Selection.objects);
+            int index;
+            string resourcesFolder = Application.dataPath;
+            resourcesFolder += "/RenPy Maker/Resources/";
+            string[] directories = Directory.GetDirectories(resourcesFolder, "*", SearchOption.AllDirectories);
             
-            int index = 0;
-            if (graph.nodes != null)
+            foreach (string item in directories)
             {
-                foreach (BaseNode node in graph.nodes)
+                if (Path.GetFileName(item) == projectName)
                 {
-                    // Skip these types of nodes
-                    if (node == null || node.GetNodeType() == "CharacterNode")
-                    {
-                        index++;
-                        continue;
-                    }
+                    DirectoryInfo folder = new DirectoryInfo(item);
+                    var files = folder.GetFiles("*.asset");
 
-                    if (selectionCache.Contains(graph.nodes[index]))
+                    for (int i = 0; i < files.Length; i++)
                     {
-                        Debug.Log("Starting from selected node");
-                        graph.current = node;
-                        break;
-                    }
+                        index = 0;
+                        RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
+                        if (newGraph != null)
+                        {
+                            NodeEditorWindow window = NodeEditorWindow.current;
+                            window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
+                            graph = newGraph;
 
-                    index++;
+                            foreach (BaseNode node in graph.nodes)
+                            {
+                                // Skip these types of nodes
+                                if (node == null || node.GetNodeType() == "CharacterNode")
+                                {
+                                    index++;
+                                    continue;
+                                }
+
+                                if (selectionCache.Contains(graph.nodes[index]))
+                                {
+                                    Debug.Log("Starting from selected node");
+
+                                    graph.current = node;
+
+                                    StopLastCoroutine();
+                                    _parser = StartCoroutine(ParseNode());
+                                    return;
+                                }
+
+                                index++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
+        FindStart();
+    }
+
+    public void FindStart()
+    {
+        graph.current = null;
+
+#if UNITY_EDITOR        
+        string resourcesFolder = Application.dataPath;
+        resourcesFolder += "/RenPy Maker/Resources/";
+        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
+        foreach (string item in directories)
+        {
+            if (Path.GetFileName(item) == projectName)
+            {
+                DirectoryInfo folder = new DirectoryInfo(item);
+                var files = folder.GetFiles("*.asset");
+
+                for (int i = 0; i < files.Length; i++)
+                {
+                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
+                    if (newGraph != null)
+                    {
+                        NodeEditorWindow window = NodeEditorWindow.current;
+                        window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
+                        graph = newGraph;
+
+                        foreach (BaseNode n in graph.nodes)
+                        {
+                            if (n.GetNodeType() == "StartNode")
+                            {
+                                graph.current = n;
+
+                                NextNode("exit");
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+        Debug.LogError("Unable to find the Start node");
+    }
+    
+    public void CallLabel(string labelName)
+    {
+#if UNITY_EDITOR
+//        if (graph.ErrorCheck())
+//            return;
+
+        if (string.IsNullOrEmpty(labelName))
+        {
+            Debug.LogError("Missing label name");
+            return;
+        }
+
+        nodeStack.Add(graph.current);
+        graphStack.Add(graph);
+        
+        string resourcesFolder = Application.dataPath;
+        resourcesFolder += "/RenPy Maker/Resources/";
+        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
+        foreach (string item in directories)
+        {
+            if (Path.GetFileName(item) == projectName)
+            {
+                DirectoryInfo folder = new DirectoryInfo(item);
+                var files = folder.GetFiles("*.asset");
+
+                for (int i = 0; i < files.Length; i++)
+                {
+                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
+                    if (newGraph != null)
+                    {
+                        NodeEditorWindow window = NodeEditorWindow.current;
+                        window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
+                        graph = newGraph;
+
+                        foreach (BaseNode n in graph.nodes)
+                        {
+                            if (n.GetNodeType() == "LabelNode" && n.GetString() == labelName)
+                            {
+                                graph.current = n;
+                                
+                                NextNode("exit");
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        if (graph.current == null)
+        Debug.LogError("Unable to find the Label node");
+#endif
+    }
+
+    public void JumpLabel(string labelName)
+    {
+#if UNITY_EDITOR
+//        if (graph.ErrorCheck())
+//            return;
+
+        if (string.IsNullOrEmpty(labelName))
         {
-            // Find a Start node
-            foreach (BaseNode n in graph.nodes)
+            Debug.LogError("Missing label name");
+            return;
+        }
+
+        if (labelName == "start")
+        {
+            NodeEditorWindow window = NodeEditorWindow.current;
+            window.graph = Resources.Load(projectName + "/" + graph.name) as NodeGraph;                
+            List<BaseNode> nodes = GetNodeList("All");
+
+            foreach (BaseNode n in nodes)
             {
                 if (n.GetNodeType() == "StartNode")
                 {
                     graph.current = n;
-                    break;
+
+                    NextNode("exit");
+                    return;
                 }
             }
         }
 
-        if (graph.current == null)
+        string resourcesFolder = Application.dataPath;
+        resourcesFolder += "/RenPy Maker/Resources/";
+        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
+        foreach (string item in directories)
         {
-            Debug.LogError("Unable to find a start node");
-            return;
-        }
-#else
-        // Find a Start node
-        foreach (BaseNode n in graph.nodes)
-        {
-            if (n.GetNodeType() == "StartNode")
+            if (Path.GetFileName(item) == projectName)
             {
-                graph.current = n;
-                break;
+                DirectoryInfo folder = new DirectoryInfo(item);
+                var files = folder.GetFiles("*.asset");
+
+                for (int i = 0; i < files.Length; i++)
+                {
+                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
+                    if (newGraph != null)
+                    {
+                        NodeEditorWindow window = NodeEditorWindow.current;
+                        window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
+                        graph = newGraph;
+
+                        foreach (BaseNode n in graph.nodes)
+                        {
+                            if (n.GetNodeType() == "LabelNode" && n.GetString() == labelName)
+                            {
+                                graph.current = n;
+                                
+                                NextNode("exit");
+                                return;
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        Debug.LogError("Unable to find the Label node");
 #endif
-        StopLastCoroutine();
-        _parser = StartCoroutine(ParseNode());
     }
-    
+
+    public List<BaseNode> GetNodeList(string nodeType)
+    {
+        List<BaseNode> nodes = new List<BaseNode>();
+       
+        string resourcesFolder = Application.dataPath;
+        resourcesFolder += "/RenPy Maker/Resources/";
+        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
+        //Debug.Log(directories.Length);
+        foreach (string item in directories)
+        {
+            if (Path.GetFileName(item) == projectName)
+            {
+                DirectoryInfo folder = new DirectoryInfo(item);
+                var files = folder.GetFiles("*.asset");
+
+                for (int i = 0; i < files.Length; i++)
+                {
+                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
+                    if (newGraph != null)
+                    {
+                        foreach (BaseNode n in newGraph.nodes)
+                        {
+                            if (n.GetEnabledStatus())
+                            {
+                                if (nodeType == "All")
+                                {
+                                    nodes.Add(n);
+                                }
+                                else if (n.GetNodeType() == nodeType)
+                                {
+                                    nodes.Add(n);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }        
+        return nodes;
+    }
+
     IEnumerator ParseNode()
     {
         BaseNode node = graph.current;
-        
+
 #if UNITY_EDITOR
         Selection.activeGameObject = null;
         Selection.activeObject = node;
@@ -206,311 +400,455 @@ public class NodeParser : MonoBehaviour
         string theNodeType = node.GetNodeType();
         string theCharacter = node.GetCharacter();
         string theDialogue = node.GetDialogue();
-       
-        if (theNodeType == "CommentNode")
+
+        if (node.GetEnabledStatus() == false)
         {
-            //this.ShowNotification(new GUIContent("Text"));
             NextNode("exit");
         }
-        
-        if (theNodeType == "DialogueNode")
+        else
         {
-            speaker.text = theCharacter;
-            speakerColor = node.GetColor();
-            speaker.color = speakerColor;
-            dialogue.text = theDialogue;
-            dialogue.fontStyle = FontStyles.Normal;
-            _speakerTexture = node.GetImage();
-            speakerImage.overrideSprite = Sprite.Create(_speakerTexture, new Rect(0,0, _speakerTexture.width ,_speakerTexture.height),new Vector2(0.5f, 0.5f),100);
-            yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
-            yield return new WaitUntil(() => Input.GetMouseButtonUp(0));
-
-            NextNode("exit");
-        }
-
-        if (theNodeType == "DynamicNode")
-        {
-            speaker.text = theCharacter;
-            speakerColor = node.GetColor();
-            speaker.color = speakerColor;
-            dialogue.text = theDialogue;
-            dialogue.fontStyle = FontStyles.Normal;
-            _speakerTexture = node.GetImage();
-            speakerImage.overrideSprite = Sprite.Create(_speakerTexture, new Rect(0,0, _speakerTexture.width, _speakerTexture.height),new Vector2(0.5f, 0.5f),100);
-
-            _indexButtonPressed = 0;
-            List<Button> activeAndInactiveButtons = GameObject.FindObjectsOfType<Button>(true).ToList();
-            activeAndInactiveButtons = activeAndInactiveButtons.OrderBy(go=>go.name).ToList();
-            
-            for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
+            switch (theNodeType)
             {
-                if (activeAndInactiveButtons[i].gameObject.name != "Exit")
-                    activeAndInactiveButtons[i].gameObject.SetActive(false);
-            }
-
-            List<DynamicNode.DialogueOption> optionList = node.GetDynamicOptions();
-            
-            for (int i = 0; i < optionList.Count(); i++)
-            {
-                activeAndInactiveButtons[i].gameObject.SetActive(true);
-                activeAndInactiveButtons[i].GetComponentInChildren<TMP_Text>().text = optionList[i].dialogue;
-            }
-
-            // Show relevant buttons 
-            yield return new WaitUntil(() => _indexButtonPressed != 0);
-            
-            NextNode(optionList[_indexButtonPressed - 1].option);
-            
-            // Hide all buttons
-            for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
-            {
-                if (activeAndInactiveButtons[i].gameObject.name != "Exit")
-                    activeAndInactiveButtons[i].gameObject.SetActive(false);
-            }
-        }
-        
-        if (theNodeType == "HideNode")
-        {
-            int index = 0;
-            Texture2D hideTexture = node.GetImage();
-            foreach (Texture2D tex in _textures)
-            {
-                if (tex == hideTexture)
+                case "CallNode":
                 {
-                    _textures.RemoveAt(index);
-                    _positions.RemoveAt(index);
+                    string newGraphName = node.GetString();
+                    CallLabel(newGraphName);
+
                     break;
                 }
-                index++;
-            }
+                
+                case "CommentNode":
+                {
+                    //this.ShowNotification(new GUIContent("Text"));
+                    NextNode("exit");
 
-            DestroyChildren(images.transform);
-            index = 0;
-            foreach (Texture2D tex in _textures)
-            {
-                GameObject imageObject = new GameObject();
-                imageObject.name = tex.name;
-                Image newImage = imageObject.AddComponent<Image>();
-                float tempWidth;
-                float tempHeight;
-                if (_resolutionIndex == 0)
-                {
-                    tempWidth = tex.width * 1.8f;
-                    tempHeight = tex.height * 1.8f;
+                    break;
                 }
-                else if (_resolutionIndex == 1)
-                {
-                    tempWidth = tex.width * 1.5f;
-                    tempHeight = tex.height * 1.5f;
-                }
-                else
-                {
-                    tempWidth = tex.width;
-                    tempHeight = tex.height;
-                }
-                newImage.rectTransform.sizeDelta = new Vector2(tempWidth, tempHeight);
-                newImage.preserveAspect = true;
-                if (_positions[index] == "Right")
-                    newImage.rectTransform.position = new Vector3(1560, tempHeight / 2, 0);
-                else if (_positions[index] == "Left")
-                    newImage.rectTransform.position = new Vector3(360, tempHeight / 2, 0);
-                else if (_positions[index] == "TrueCenter")
-                    newImage.rectTransform.position = new Vector3(960, 540, 0); 
-                else
-                    newImage.rectTransform.position = new Vector3(960, tempHeight / 2, 0); 
-                Sprite newSprite = Sprite.Create(tex, new Rect(0.0f, 0.0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100.0f);
-                newSprite.name = tex.name;
-                newImage.sprite = newSprite;
-                newImage.preserveAspect = true;
-                imageObject.transform.SetParent(images.transform);
-                index++;
-            }
 
-            NextNode("exit");
-        }
-
-        if (theNodeType == "JumpNode")
-        {
-            string jumpLabel = graph.current.GetString();
-            
-            foreach (BaseNode n in graph.nodes)
-            {
-                if (n.GetNodeType() == "LabelNode")
+                case "DialogueNode":
                 {
-                    if (n.GetString() == jumpLabel)
+                    speaker.text = theCharacter;
+                    speakerColor = node.GetColor();
+                    speaker.color = speakerColor;
+                    dialogue.text = theDialogue;
+                    dialogue.fontStyle = FontStyles.Normal;
+                    _speakerTexture = node.GetImage();
+                    speakerImage.overrideSprite = Sprite.Create(_speakerTexture,
+                        new Rect(0, 0, _speakerTexture.width, _speakerTexture.height), new Vector2(0.5f, 0.5f), 100);
+
+                    yield return new WaitUntil(() => Mouse.current.leftButton.wasPressedThisFrame);
+                    yield return new WaitUntil(() => Mouse.current.leftButton.wasReleasedThisFrame);
+
+                    NextNode("exit");
+
+                    break;
+                }
+                
+                case "HideNode":
+                {
+                    int index = 0;
+                    Texture2D hideTexture = node.GetImage();
+                    foreach (Texture2D tex in _textures)
                     {
-                        graph.current = n;
-                        break;
+                        if (tex == hideTexture)
+                        {
+                            _textures.RemoveAt(index);
+                            _positions.RemoveAt(index);
+                            break;
+                        }
+
+                        index++;
                     }
-                }                
-            }
 
-            StopLastCoroutine();
-            _parser = StartCoroutine(ParseNode());
-        }
-        
-        if (theNodeType == "LabelNode")
-        {
-            NextNode("exit");
-        }
-        
-        if (theNodeType == "MusicNode")
-        {
-            // Add Fadein and Fadeout to Unity player
-            PlayMusic(node.GetAudioSource());
-            
-            NextNode("exit");
-        }
+                    DestroyChildren(images.transform);
+                    index = 0;
+                    foreach (Texture2D tex in _textures)
+                    {
+                        GameObject imageObject = new GameObject();
+                        imageObject.name = tex.name;
+                        Image newImage = imageObject.AddComponent<Image>();
+                        float tempWidth;
+                        float tempHeight;
+                        if (_resolutionIndex == 0)
+                        {
+                            tempWidth = tex.width * 1.8f;
+                            tempHeight = tex.height * 1.8f;
+                        }
+                        else if (_resolutionIndex == 1)
+                        {
+                            tempWidth = tex.width * 1.5f;
+                            tempHeight = tex.height * 1.5f;
+                        }
+                        else if (_resolutionIndex == 2)
+                        {
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+                        else if (_resolutionIndex == 3)
+                        {
+                            Debug.Log("2560x1440");
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+                        else if (_resolutionIndex == 4)
+                        {
+                            Debug.Log("3840x2160");
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+                        else
+                        {
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
 
-        if (theNodeType == "NarrateNode")
-        {
-            speaker.text = "";
-            speakerColor = node.GetColor();
-            speaker.color = speakerColor;
-            dialogue.text = theDialogue;
-            dialogue.fontStyle = FontStyles.Italic;
-            _speakerTexture = node.GetImage();
-            speakerImage.overrideSprite = Sprite.Create(_speakerTexture, new Rect(0,0, _speakerTexture.width ,_speakerTexture.height),new Vector2(0.5f, 0.5f),100);
-            
-            yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
-            yield return new WaitUntil(() => Input.GetMouseButtonUp(0));
+                        newImage.rectTransform.sizeDelta = new Vector2(tempWidth, tempHeight);
+                        newImage.preserveAspect = true;
+                        if (_positions[index] == "Right")
+                            newImage.rectTransform.position = new Vector3(1560, tempHeight / 2, 0);
+                        else if (_positions[index] == "Left")
+                            newImage.rectTransform.position = new Vector3(360, tempHeight / 2, 0);
+                        else if (_positions[index] == "TrueCenter")
+                            newImage.rectTransform.position = new Vector3(960, 540, 0);
+                        else
+                            newImage.rectTransform.position = new Vector3(960, tempHeight / 2, 0);
+                        Sprite newSprite = Sprite.Create(tex, new Rect(0.0f, 0.0f, tex.width, tex.height),
+                            new Vector2(0.5f, 0.5f), 100.0f);
+                        newSprite.name = tex.name;
+                        newImage.sprite = newSprite;
+                        newImage.preserveAspect = true;
+                        imageObject.transform.SetParent(images.transform);
+                        imageObject.transform.localPosition = Vector3.zero;
+                        imageObject.transform.localScale = Vector3.one;
+                        index++;
+                    }
 
-            NextNode("exit");
-        }
-        
-        if (theNodeType == "PauseNode")
-        {
-            if (node.GetSeconds() == 0)
-            {
-                yield return new WaitUntil(() => Input.GetMouseButtonDown(0));
-                yield return new WaitUntil(() => Input.GetMouseButtonUp(0));
-            }
-            else
-                yield return new WaitForSeconds(node.GetSeconds());
+                    NextNode("exit");
 
-            NextNode("exit");
-        }
-        
-        if (theNodeType == "QueueMusicNode")
-        {
-            QueueAudio(node.GetAudioSource());
-
-            NextNode("exit");
-        }
-
-        if (theNodeType == "ReturnNode")
-        {
-#if UNITY_EDITOR
-            // Returns to the start
-            foreach (BaseNode n in graph.nodes)
-            {
-                if (n.GetNodeType() == "StartNode")
-                {
-                    graph.current = n;
                     break;
                 }
-            }
 
-            StopLastCoroutine();
-            _parser = StartCoroutine(ParseNode());
+                case "JumpNode":
+                {
+/*                
+                string jumpLabel = graph.current.GetString();
+
+                foreach (BaseNode n in graph.nodes)
+                {
+                    if (n.GetNodeType() == "LabelNode")
+                    {
+                        if (n.GetString() == jumpLabel)
+                        {
+                            graph.current = n;
+                            break;
+                        }
+                    }
+                }
+
+                StopLastCoroutine();
+                _parser = StartCoroutine(ParseNode());
+*/
+                    JumpLabel(node.GetString());
+
+                    break;
+                }
+
+                case "LabelNode":
+                {
+                    NextNode("exit");
+
+                    break;
+                }
+
+                case "MenuNode":
+                {
+                    speaker.text = theCharacter;
+                    speakerColor = node.GetColor();
+                    speaker.color = speakerColor;
+                    dialogue.text = theDialogue;
+                    dialogue.fontStyle = FontStyles.Normal;
+                    _speakerTexture = node.GetImage();
+                    speakerImage.overrideSprite = Sprite.Create(_speakerTexture,
+                        new Rect(0, 0, _speakerTexture.width, _speakerTexture.height), new Vector2(0.5f, 0.5f), 100);
+
+                    _indexButtonPressed = 0;
+                    List<Button> activeAndInactiveButtons = GameObject.FindObjectsOfType<Button>(true).ToList();
+                    activeAndInactiveButtons = activeAndInactiveButtons.OrderBy(go => go.name).ToList();
+
+                    for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
+                    {
+                        if (activeAndInactiveButtons[i].gameObject.name != "Exit")
+                            activeAndInactiveButtons[i].gameObject.SetActive(false);
+                    }
+
+                    List<MenuNode.MenuOption> optionList = node.GetMenuOptions();
+
+                    for (int i = 0; i < optionList.Count(); i++)
+                    {
+                        activeAndInactiveButtons[i].gameObject.SetActive(true);
+                        activeAndInactiveButtons[i].GetComponentInChildren<TMP_Text>().text = optionList[i].dialogue;
+                    }
+
+                    // Show relevant buttons 
+                    yield return new WaitUntil(() => _indexButtonPressed != 0);
+
+                    NextNode(optionList[_indexButtonPressed - 1].option);
+
+                    // Hide all buttons
+                    for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
+                    {
+                        if (activeAndInactiveButtons[i].gameObject.name != "Exit")
+                            activeAndInactiveButtons[i].gameObject.SetActive(false);
+                    }
+
+                    break;
+                }
+
+                case "MusicNode":
+                {
+                    // Add Fadein and Fadeout to Unity player
+                    PlayMusic(node.GetAudioSource());
+
+                    NextNode("exit");
+
+                    break;
+                }
+
+                case "NarrateNode":
+                {
+                    speaker.text = "";
+                    speakerColor = node.GetColor();
+                    speaker.color = speakerColor;
+                    dialogue.text = theDialogue;
+                    dialogue.fontStyle = FontStyles.Italic;
+                    _speakerTexture = node.GetImage();
+                    speakerImage.overrideSprite = Sprite.Create(_speakerTexture,
+                        new Rect(0, 0, _speakerTexture.width, _speakerTexture.height), new Vector2(0.5f, 0.5f), 100);
+
+                    yield return new WaitUntil(() => Mouse.current.leftButton.wasPressedThisFrame);
+                    yield return new WaitUntil(() => Mouse.current.leftButton.wasReleasedThisFrame);
+
+                    NextNode("exit");
+
+                    break;
+                }
+
+                case "PauseNode":
+                {
+                    if (node.GetSeconds() == 0)
+                    {
+                        yield return new WaitUntil(() => Mouse.current.leftButton.wasPressedThisFrame);
+                        yield return new WaitUntil(() => Mouse.current.leftButton.wasReleasedThisFrame);
+                    }
+                    else
+                        yield return new WaitForSeconds(node.GetSeconds());
+
+                    NextNode("exit");
+
+                    break;
+                }
+
+                case "QueueMusicNode":
+                {
+                    QueueAudio(node.GetAudioSource());
+
+                    NextNode("exit");
+
+                    break;
+                }
+
+                case "ReturnNode":
+                {
+#if UNITY_EDITOR
+                    if (graphStack.Count == 0)
+                    {
+                        FindStart();
+                    }
+                    else
+                    {
+                        graph = graphStack[graphStack.Count - 1];
+                        graph.current = nodeStack[nodeStack.Count - 1];
+                        graphStack.RemoveAt(graphStack.Count - 1);
+                        nodeStack.RemoveAt(nodeStack.Count - 1);
+                        NodeEditorWindow window = NodeEditorWindow.current;
+                        window.graph = Resources.Load(projectName + "/" + graph.name) as NodeGraph;
+                        NextNode("exit");
+                    }
 #else
-            ExitApplication();
+                ExitApplication();
 #endif
-        }
-
-        if (theNodeType == "SceneNode")
-        {
-            DestroyChildren(images.transform);
-            _textures.Clear();
-            _positions.Clear();
-            _sceneTexture = node.GetImage();
-            sceneImage.overrideSprite = Sprite.Create(_sceneTexture, new Rect(0,0, _sceneTexture.width, _sceneTexture.height),new Vector2(0.5f, 0.5f),100);
-            NextNode("exit");
-        }
-
-        if (theNodeType == "SoundNode")
-        {
-            PlaySound(node.GetAudioSource());
-            NextNode("exit");
-        }
-
-        if (theNodeType == "ShowNode")
-        {
-            DestroyChildren(images.transform);
-            _showTexture = node.GetImage();
-            _textures.Add(_showTexture);
-            _positions.Add(node.GetPosition());
-            int index = 0;
-            foreach (Texture2D tex in _textures)
-            {
-                GameObject imageObject = new GameObject();
-                imageObject.name = tex.name;
-                Image newImage = imageObject.AddComponent<Image>();
-                float tempWidth;
-                float tempHeight;
-                if (_resolutionIndex == 0)
-                {
-                    tempWidth = tex.width * 1.8f;
-                    tempHeight = tex.height * 1.8f;
+                    break;
                 }
-                else if (_resolutionIndex == 1)
+
+                case "SceneNode":
                 {
-                    tempWidth = tex.width * 1.5f;
-                    tempHeight = tex.height * 1.5f;
+                    DestroyChildren(images.transform);
+                    _textures.Clear();
+                    _positions.Clear();
+                    _sceneTexture = node.GetImage();
+                    sceneImage.overrideSprite = Sprite.Create(_sceneTexture,
+                        new Rect(0, 0, _sceneTexture.width, _sceneTexture.height), new Vector2(0.5f, 0.5f), 100);
+                    NextNode("exit");
+
+                    break;
                 }
-                else
+
+                case "ShowNode":
                 {
-                    tempWidth = tex.width;
-                    tempHeight = tex.height;
+                    DestroyChildren(images.transform);
+                    _showTexture = node.GetImage();
+                    _textures.Add(_showTexture);
+                    _positions.Add(node.GetPosition());
+                    int index = 0;
+                    foreach (Texture2D tex in _textures)
+                    {
+                        GameObject imageObject = new GameObject();
+                        imageObject.name = tex.name;
+                        Image newImage = imageObject.AddComponent<Image>();
+                        float tempWidth;
+                        float tempHeight;
+                        if (_resolutionIndex == 0)
+                        {
+                            // 1066x600
+                            tempWidth = tex.width * 1.8f;
+                            tempHeight = tex.height * 1.8f;
+                        }
+                        else if (_resolutionIndex == 1)
+                        {
+                            // 1280x720
+                            tempWidth = tex.width * 1.5f + 5f;
+                            tempHeight = tex.height * 1.5f;
+                            //Debug.Log(tempWidth + " " + tempHeight);
+                        }
+                        else if (_resolutionIndex == 2)
+                        {
+                            // 1920x1080
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+                        else if (_resolutionIndex == 3)
+                        {
+                            // 2560x1440
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+                        else if (_resolutionIndex == 4)
+                        {
+                            // 3840x2160
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+                        else
+                        {
+                            tempWidth = tex.width;
+                            tempHeight = tex.height;
+                        }
+
+
+                        newImage.rectTransform.sizeDelta = new Vector2(tempWidth, tempHeight);
+                        newImage.preserveAspect = true;
+                        if (_positions[index] == "Right")
+                            newImage.rectTransform.position = new Vector3(1560, tempHeight / 2, 0);
+                        else if (_positions[index] == "Left")
+                            newImage.rectTransform.position = new Vector3(360, tempHeight / 2, 0);
+                        else if (_positions[index] == "TrueCenter")
+                            newImage.rectTransform.position = new Vector3(960, 540, 0);
+                        else
+                            newImage.rectTransform.position = new Vector3(960, tempHeight / 2, 0);
+                        Sprite newSprite = Sprite.Create(tex, new Rect(0.0f, 0.0f, tex.width, tex.height),
+                            new Vector2(0.5f, 0.5f), 100.0f);
+                        newSprite.name = tex.name;
+                        newImage.sprite = newSprite;
+                        imageObject.transform.SetParent(images.transform);
+                        imageObject.transform.localPosition = Vector3.zero;
+                        imageObject.transform.localScale = Vector3.one;
+                        index++;
+                    }
+
+                    NextNode("exit");
+
+                    break;
                 }
-                newImage.rectTransform.sizeDelta = new Vector2(tempWidth, tempHeight);
-                newImage.preserveAspect = true;
-                if (_positions[index] == "Right")
-                    newImage.rectTransform.position = new Vector3(1560, tempHeight / 2, 0);
-                else if (_positions[index] == "Left")
-                    newImage.rectTransform.position = new Vector3(360, tempHeight / 2, 0);
-                else if (_positions[index] == "TrueCenter")
-                    newImage.rectTransform.position = new Vector3(960, 540, 0); 
-                else
-                    newImage.rectTransform.position = new Vector3(960, tempHeight / 2, 0); 
-                Sprite newSprite = Sprite.Create(tex, new Rect(0.0f, 0.0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100.0f);
-                newSprite.name = tex.name;
-                newImage.sprite = newSprite;
-                imageObject.transform.SetParent(images.transform);
-                index++;
-            }
 
-            NextNode("exit");
-        }
+                case "SoundNode":
+                {
+                    PlaySound(node.GetAudioSource());
+                    NextNode("exit");
 
-        if (theNodeType == "StartNode")
-        {
-            NextNode("exit");
-        }
+                    break;
+                }
 
-        if (theNodeType == "StopMusicNode")
-        {
-            // Add Fadeout to Unity player
-            StopAudio();
-            
-            NextNode("exit");
-        }
+                case "StartNode":
+                {
+                    NextNode("exit");
 
-        if (theNodeType == "TransitionNode")
-        {
-            // Add transitions to Unity player
-            string transition = node.GetTransition();
+                    break;
+                }
+
+                case "StopMusicNode":
+                {
+                    // Add Fadeout to Unity player
+                    StopAudio();
+
+                    NextNode("exit");
+
+                    break;
+                }
+                
+                case "TransitionNode":
+                {
+                    // Add transitions to Unity player
+                    string transition = node.GetTransition();
+
 #if UNITY_EDITOR
 /*            
-            foreach(SceneView scene in SceneView.sceneViews)
-            {
-                scene.ShowNotification(new GUIContent(transition));
-            }
+                foreach(SceneView scene in SceneView.sceneViews)
+                {
+                    scene.ShowNotification(new GUIContent(transition));
+                }
 
-            _window.ShowNotification(new GUIContent(transition));
-*/            
+                _window.ShowNotification(new GUIContent(transition));
+*/
 #endif
-            NextNode("exit");
+                    NextNode("exit");
+
+                    break;
+                }
+
+                default:
+                {
+                    Debug.LogError("Fell through the switch block");
+                    break;
+                }
+            }
+        }
+    }
+
+    private IEnumerator MouseOver()
+    {
+        while (true)
+        {
+            Vector2 currentPos = Mouse.current.position.ReadValue();
+            
+            Canvas theCanvas = null;
+            GameObject tempObject = GameObject.Find("Canvas");
+            if (tempObject != null)
+            {
+                theCanvas = tempObject.GetComponent<Canvas>();
+                if (theCanvas == null)
+                    Debug.Log("Could not locate Canvas component on " + tempObject.name);
+            }
+            currentPos = Mouse.current.position.ReadValue() / theCanvas.scaleFactor;
+
+            //float posX = 1280f / 1920f * currentPos.x; // Update this to the selected resolution
+            //float posY = 720f / 1080f * currentPos.y;
+
+            float posX = currentPos.x;
+            float posY = currentPos.y;
+
+            //Debug.Log(posX + " " + posY);
+            
+            yield return null;
         }
     }
 
@@ -522,7 +860,7 @@ public class NodeParser : MonoBehaviour
             _parser = null;
         }
     }
-    
+
     public void NextNode(string fieldName)
     {
         // Find the port with this name
@@ -538,7 +876,7 @@ public class NodeParser : MonoBehaviour
         StopLastCoroutine();
         _parser = StartCoroutine(ParseNode());
     }
-
+    
     public void SetIndexOfButton(int index)
     {
         _indexButtonPressed = index;

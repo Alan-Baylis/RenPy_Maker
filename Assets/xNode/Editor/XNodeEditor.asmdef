@@ -1,7 +1,9 @@
 ﻿{
     "name": "XNodeEditor",
     "references": [
-        "XNode"
+        "XNode",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

@@ -31,15 +31,43 @@ namespace XNodeEditor
             serializedObject.ApplyModifiedProperties();
         }
         
+        public void SetEnabledState(bool state)
+        {
+            _soundNode.enabled = state;
+        }
+
+        public override void AddContextMenuItems(GenericMenu menu)
+        {
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
+
+            if (enabled)
+                menu.AddItem(new GUIContent("Disable"), false, () => SetEnabledState(false));
+            else
+                menu.AddItem(new GUIContent("Enable"), false, () => SetEnabledState(true));
+
+            base.AddContextMenuItems(menu);
+        }
+
         public override Color GetTint()
         {
-            SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
-            _onError = errorProp.boolValue;
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
 
-            if (_onError)
-                return new Color(0.5f, 0, 0);
+            if (enabled)
+            {
+                SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
+                _onError = errorProp.boolValue;
+
+                if (_onError)
+                    return new Color(0.5f, 0, 0);
+                else
+                    return NodeEditorPreferences.GetSettings().tintColor;
+            }
             else
-                return NodeEditorPreferences.GetSettings().tintColor;
+            {
+                return new Color(0.1f, 0.1f, 0.1f);
+            }
         }
     }
 }

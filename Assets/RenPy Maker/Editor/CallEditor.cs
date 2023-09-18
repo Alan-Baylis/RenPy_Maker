@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace XNodeEditor
 {
-    [CustomNodeEditor(typeof(QueueMusicNode))]
-    public class QueueMusicEditor : NodeEditor
+    [CustomNodeEditor(typeof(CallNode))]
+    public class CallEditor : NodeEditor
     {
         private bool _onError = false;
-        private QueueMusicNode _queueMusicNode;
-        
+        private CallNode _callNode;
+
         public override void OnHeaderGUI()
         {
             GUILayout.Label(target.name, NodeEditorResources.styles.nodeHeader, GUILayout.Height(30));
@@ -16,24 +16,28 @@ namespace XNodeEditor
 
         public override void OnBodyGUI()
         {
-            if (_queueMusicNode == null)
+            if (_callNode == null)
             {
-                _queueMusicNode = target as QueueMusicNode;
+                _callNode = target as CallNode;
             }
-            
+
             serializedObject.Update();
 
-            EditorGUILayout.PrefixLabel("Audio Source");
-            _queueMusicNode.source = (AudioClip)EditorGUILayout.ObjectField(_queueMusicNode.source, typeof(AudioClip), false);
-
-            NodeEditorGUILayout.PortPair(_queueMusicNode.GetInputPort("entry"), _queueMusicNode.GetOutputPort("exit"));
-
+            EditorGUIUtility.labelWidth = 50;
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("Label");
+            _callNode.label = EditorGUILayout.TextField(_callNode.label);
+            //NodeEditorGUILayout.PropertyField(serializedObject.FindProperty("function"));
+            EditorGUILayout.EndHorizontal();
+            
+            NodeEditorGUILayout.PortPair(_callNode.GetInputPort("entry"), _callNode.GetOutputPort("exit"));
+            //NodeEditorGUILayout.PortField(_callNode.GetInputPort("entry"), GUILayout.MinWidth(0));
             serializedObject.ApplyModifiedProperties();
         }
-        
+
         public void SetEnabledState(bool state)
         {
-            _queueMusicNode.enabled = state;
+            _callNode.enabled = state;
         }
 
         public override void AddContextMenuItems(GenericMenu menu)

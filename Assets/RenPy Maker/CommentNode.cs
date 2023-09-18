@@ -7,6 +7,8 @@ public class CommentNode : BaseNode
 {
 	[Input] public int entry;
 	
+	public bool enabled = true;
+
 //	[TextArea (6, 5)]
 	public string comment;
 	[HideInInspector]
@@ -14,6 +16,23 @@ public class CommentNode : BaseNode
 	private int jumpIndex;
 	private bool evaluated;
 	private List<string> labels = new List<string>();
+
+	private int _nodeId;
+
+	public override bool GetEnabledStatus()
+	{
+		return enabled;
+	}
+
+	public override void SetNodeId(int id)
+	{
+		_nodeId = id;
+	}
+
+	public override int GetNodeId()
+	{
+		return _nodeId;
+	}
 
 	private void Reset()
 	{

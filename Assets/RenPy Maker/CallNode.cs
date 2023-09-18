@@ -2,20 +2,15 @@
 using UnityEngine;
 using XNode;
 
-[CreateNodeMenu("Nodes/Show")]
-public class ShowNode : BaseNode
+[CreateNodeMenu("Nodes/Call")]
+public class CallNode : BaseNode
 {
 	[Input] public int entry;
 
 	public bool enabled = true;
-
-	public Texture2D image;
+	public string label;
 	[HideInInspector]
 	public bool errorStatus;
-	[HideInInspector]
-	public int option = 2;
-	[HideInInspector]
-	public List<string> positions = new List<string> { "Left", "Right", "Center", "TrueCenter" };
 	private int jumpIndex;
 	private bool evaluated;
 	private List<string> labels = new List<string>();
@@ -41,20 +36,15 @@ public class ShowNode : BaseNode
 	{
 		this.AddDynamicOutput(typeof(int), ConnectionType.Override, TypeConstraint.None, "exit");
 	}
-
-	public override string GetPosition()
+	
+	public override string GetString()
 	{
-		return positions[option];
+		return label;
 	}
 
 	public override string GetNodeType()
 	{
-		return "ShowNode";
-	}
-	
-	public override Texture2D GetImage()
-	{
-		return image;
+		return "CallNode";
 	}
 
 	public override void SetJumpIndex(int index)
@@ -101,17 +91,15 @@ public class ShowNode : BaseNode
 	{
 		errorStatus = false;
 		
-		foreach (NodePort p in Inputs)
-			if (!p.IsConnected)
-				errorStatus = true;
-
+		// Don't check the input port
+		
 		foreach (NodePort p in Outputs)
 			if (!p.IsConnected)
 				errorStatus = true;
 
 		if (errorStatus)
 			return "Unconnected ports";
-
+		
 		NodePort port = GetOutputPort("exit");
 		if (port != null)
 		{
@@ -123,12 +111,18 @@ public class ShowNode : BaseNode
 			}
 		}
 
-		if (image == null)
+		if (string.IsNullOrEmpty(label))
 		{
 			errorStatus = true;
-			return "No texture image";
+			return "No label name";
 		}
 		
+		if (!RenpyMaker.CheckForAlphaNumeric(label))
+		{
+			errorStatus = true;
+			return "Label must start with a letter and use alphanumeric characters";
+		}
+
 		return "No Error";
 	}
 }

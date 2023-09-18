@@ -6,6 +6,8 @@ using XNode;
 public class TransitionNode : BaseNode {
 	[Input] public int entry;
 
+	public bool enabled = true;
+
 	[HideInInspector]
 	public int option;
 	[HideInInspector]
@@ -16,6 +18,23 @@ public class TransitionNode : BaseNode {
 	private bool evaluated;
 	private List<string> labels = new List<string>();
 	
+	private int _nodeId;
+
+	public override bool GetEnabledStatus()
+	{
+		return enabled;
+	}
+
+	public override void SetNodeId(int id)
+	{
+		_nodeId = id;
+	}
+
+	public override int GetNodeId()
+	{
+		return _nodeId;
+	}
+
 	private void Reset()
 	{
 		this.AddDynamicOutput(typeof(int), ConnectionType.Override, TypeConstraint.None, "exit");

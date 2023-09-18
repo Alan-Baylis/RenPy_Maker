@@ -21,23 +21,23 @@ namespace XNodeEditor
 
             if (_dialogueNode.initialized)
                 return;
-            _dialogueNode.initialized = true;
             
-            RenpyMaker graph = _dialogueNode.graph as RenpyMaker;
-            List<string> set = graph.GetCharacterList();
+            _dialogueNode.initialized = true;
 
-            if (_dialogueNode.GetCharacterIndex() < set.Count)
+            GameObject renpymaker = GameObject.Find("RenPy Maker");
+            NodeParser nodeParser = renpymaker.GetComponent("NodeParser") as NodeParser;
+            List<BaseNode> nodes = new List<BaseNode>();
+            nodes = nodeParser.GetNodeList("CharacterNode");
+            List<string> set = new List<string>();
+            foreach (BaseNode c in nodes)
             {
-                foreach (BaseNode n in graph.nodes)
+                if (c.GetNodeType() == "CharacterNode") 
                 {
-                    if (n.GetNodeType() == "CharacterNode" &&
-                        set[_dialogueNode.GetCharacterIndex()] == n.GetCharacter())
-                    {
-                        _dialogueNode.character = n.GetCharacter();
-                        _dialogueNode.color = n.GetColor();
-                        _dialogueNode.image = n.GetImage();
-                        break;
-                    }
+                    CharacterNode characterNode = c as CharacterNode;
+                    _dialogueNode.character = characterNode.GetCharacter();
+                    _dialogueNode.color = characterNode.GetColor();
+                    _dialogueNode.image = characterNode.GetImage();
+                    break;
                 }
             }
         }
@@ -56,16 +56,31 @@ namespace XNodeEditor
             
             serializedObject.Update();
 
-            RenpyMaker graph = _dialogueNode.graph as RenpyMaker;
-            List<string> set = graph.GetCharacterList();
+            GameObject renpymaker = GameObject.Find("RenPy Maker");
+            NodeParser nodeParser = renpymaker.GetComponent("NodeParser") as NodeParser;
+            List<BaseNode> nodes = new List<BaseNode>();
+            nodes = nodeParser.GetNodeList("CharacterNode");
+            List<string> set = new List<string>();
+            foreach (BaseNode c in nodes)
+            {
+                if (c.GetNodeType() == "CharacterNode") 
+                {
+                    CharacterNode characterNode = c as CharacterNode;
+                    set.Add(characterNode.character);
+                }
+            }
 
+            GUILayout.BeginHorizontal();
+            EditorGUIUtility.labelWidth = 65;
+            EditorGUILayout.PrefixLabel("Character");
             EditorGUI.BeginChangeCheck();
-            _dialogueNode.SetCharacterIndex(EditorGUILayout.Popup(_dialogueNode.GetCharacterIndex(), set.ToArray()));
+            _dialogueNode.SetCharacterIndex(EditorGUILayout.Popup(_dialogueNode.GetCharacterIndex(), set.ToArray()));//, GUILayout.Width(100)));
+            GUILayout.EndHorizontal();
             if (EditorGUI.EndChangeCheck())
             {
                 if (_dialogueNode.GetCharacterIndex() < set.Count)
                 {
-                    foreach (BaseNode n in _dialogueNode.graph.nodes)
+                    foreach (BaseNode n in nodes)
                     {
                         if (n.GetNodeType() == "CharacterNode" &&
                             set[_dialogueNode.GetCharacterIndex()] == n.GetCharacter())
@@ -99,21 +114,49 @@ namespace XNodeEditor
             
             if (rect.Contains(Event.current.mousePosition))
             {
-                //NodeEditorWindow.current.MoveNodeToTop(_dialogueNode);
+                //NodeEditorWindow.current.MoveNodeToTop(_dialogNode);
                 GUI.Label(new Rect(4, rect.y + 18, 200, 100),
                     new GUIContent("", (Texture2D)property.objectReferenceValue));
             }
         }
         
+        public void SetEnabledState(bool state)
+        {
+            _dialogueNode.enabled = state;
+        }
+
+        public override void AddContextMenuItems(GenericMenu menu)
+        {
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
+
+            if (enabled)
+                menu.AddItem(new GUIContent("Disable"), false, () => SetEnabledState(false));
+            else
+                menu.AddItem(new GUIContent("Enable"), false, () => SetEnabledState(true));
+
+            base.AddContextMenuItems(menu);
+        }
+
         public override Color GetTint()
         {
-            SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
-            _onError = errorProp.boolValue;
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
 
-            if (_onError)
-                return new Color(0.5f, 0, 0);
+            if (enabled)
+            {
+                SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
+                _onError = errorProp.boolValue;
+
+                if (_onError)
+                    return new Color(0.5f, 0, 0);
+                else
+                    return NodeEditorPreferences.GetSettings().tintColor;
+            }
             else
-                return NodeEditorPreferences.GetSettings().tintColor;
+            {
+                return new Color(0.1f, 0.1f, 0.1f);
+            }
         }
     }
 }

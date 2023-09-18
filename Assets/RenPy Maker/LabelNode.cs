@@ -7,6 +7,8 @@ public class LabelNode : BaseNode
 {
 	[Input] public int entry;
 
+	public bool enabled = true;
+
 	public string label;
 	[HideInInspector]
 	public bool errorStatus;
@@ -14,19 +16,36 @@ public class LabelNode : BaseNode
 	private bool evaluated;
 	private List<string> labels = new List<string>();
 
+	private int _nodeId;
+
+	public override bool GetEnabledStatus()
+	{
+		return enabled;
+	}
+
+	public override void SetNodeId(int id)
+	{
+		_nodeId = id;
+	}
+
+	public override int GetNodeId()
+	{
+		return _nodeId;
+	}
+
 	private void Reset()
 	{
 		this.AddDynamicOutput(typeof(int), ConnectionType.Override, TypeConstraint.None, "exit");
 	}
 	
-	public override string GetString()
-	{
-		return label;
-	}
-
 	public override string GetNodeType()
 	{
 		return "LabelNode";
+	}
+
+	public override string GetString()
+	{
+		return label;
 	}
 
 	public override void SetJumpIndex(int index)

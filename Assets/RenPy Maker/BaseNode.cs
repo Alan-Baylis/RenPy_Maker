@@ -1,9 +1,61 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Video;
 using XNode;
 
 public abstract class BaseNode : Node
 {
+	public virtual void SetNodeId(int newId)
+	{
+	}
+
+	public virtual int GetNodeId()
+	{
+		return 0;
+	}
+
+	public virtual string GetStorageName()
+	{
+		return null;
+	}
+
+	public virtual void SetStorageName(string name)
+	{
+	}
+
+	public virtual string GetPersonalityName()
+	{
+		return null;
+	}
+
+	public virtual void SetPersonalityName(string name)
+	{
+	}
+
+	public virtual string GetDescription()
+	{
+		return null;
+	}
+
+	public virtual void SetDescription(string name)
+	{
+	}
+
+	public virtual string GetItemName()
+	{
+		return null;
+	}
+
+	public virtual bool GetEnabledStatus()
+	{
+		return false;
+	}
+
+	public virtual int GetIndex()
+	{
+		return 0;
+	}
+
 	public virtual float GetFadein()
 	{
 		return 1.0f;
@@ -18,7 +70,17 @@ public abstract class BaseNode : Node
 	{
 		return null;
 	}
+
+	public virtual VideoClip GetMainVideo()
+	{
+		return null;
+	}
 	
+	public virtual VideoClip GetMaskVideo()
+	{
+		return null;
+	}
+
 	public virtual string GetTransition()
 	{
 		return null;
@@ -48,7 +110,12 @@ public abstract class BaseNode : Node
 		return null;
 	}
 
-	public virtual List<DynamicNode.DialogueOption> GetDynamicOptions()
+	public virtual string GetChannel()
+	{
+		return null;
+	}
+
+	public virtual List<MenuNode.MenuOption> GetMenuOptions()
 	{
 		return null;
 	}
@@ -57,7 +124,17 @@ public abstract class BaseNode : Node
 	{
 		return null;
 	}
-	
+
+	public virtual Texture2D GetIdleImage()
+	{
+		return null;
+	}
+
+	public virtual Texture2D GetHoverImage()
+	{
+		return null;
+	}
+
 	public virtual string GetDialogue()
 	{
 		return null;
@@ -68,14 +145,23 @@ public abstract class BaseNode : Node
 		return Color.white;
 	}
 
-	public virtual int GetSeconds()
+	public virtual float GetSeconds()
 	{
-		return 1;
+		return 1.0f;
 	}
 
 	public virtual Sprite GetSprite()
 	{
 		return null;
+	}
+
+	public virtual bool GetState()
+	{
+		return false;
+	}
+
+	public virtual void SetState(bool state)
+	{
 	}
 
 	public virtual void SetJumpIndex(int newIndex)

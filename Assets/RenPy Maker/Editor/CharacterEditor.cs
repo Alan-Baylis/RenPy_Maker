@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
 
 namespace XNodeEditor
 {
@@ -36,8 +37,6 @@ namespace XNodeEditor
                 editingTextFlag = true;
             }
 
-            GUIStyle style = new GUIStyle();
-
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             _characterNode.character = EditorGUILayout.TextField("", _characterNode.character, GUILayout.Width(90));
@@ -46,34 +45,27 @@ namespace XNodeEditor
             if (editingTextFlag && !EditorGUIUtility.editingTextField)
             {
                 editingTextFlag = false;
-                
-                // Update the character name of all relevant nodes 
+
+                // Collect all Character nodes
+                GameObject renpymaker = GameObject.Find("RenPy Maker");
+                NodeParser nodeParser = renpymaker.GetComponent("NodeParser") as NodeParser;
+                List<BaseNode> nodes = new List<BaseNode>();
+                nodes = nodeParser.GetNodeList("DialogueNode");
+                nodes.AddRange(nodeParser.GetNodeList("DynamicNode"));
+                nodes.AddRange(nodeParser.GetNodeList("NarrateNode"));
+
+                // Update the character name of all relevant nodes
                 if (_characterNode.previousName != _characterNode.character)
                 {
-                    foreach (BaseNode node in _characterNode.graph.nodes)
+                    foreach (BaseNode node in nodes)
                     {
-                        if (node.GetNodeType() == "DialogueNode" || node.GetNodeType() == "DynamicNode" || node.GetNodeType() == "NarrateNode")
+                        if (node.GetCharacter() == _characterNode.previousName)
                         {
-                            if (node.GetCharacter() == _characterNode.previousName)
-                            {
-                                node.SetCharacter(_characterNode.character);
-                                // Reset their character index variable
-                            }
+                            node.SetCharacter(_characterNode.character);
+// Todo: Reset their character index variable
                         }
                     }
                 }    
-
-                RenpyMaker tempGraph = _characterNode.graph as RenpyMaker;
-                
-                tempGraph.ClearCharacterList();
-
-                foreach (BaseNode n in _characterNode.graph.nodes)
-                {
-                    if (n.GetNodeType() == "CharacterNode")
-                    {
-                        tempGraph.GetCharacterList().Add(n.GetCharacter()); 
-                    }
-                }
             }
 
             GUILayout.BeginHorizontal();
@@ -91,15 +83,43 @@ namespace XNodeEditor
             serializedObject.ApplyModifiedProperties();
         }
         
+        public void SetEnabledState(bool state)
+        {
+            _characterNode.enabled = state;
+        }
+
+        public override void AddContextMenuItems(GenericMenu menu)
+        {
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
+
+            if (enabled)
+                menu.AddItem(new GUIContent("Disable"), false, () => SetEnabledState(false));
+            else
+                menu.AddItem(new GUIContent("Enable"), false, () => SetEnabledState(true));
+
+            base.AddContextMenuItems(menu);
+        }
+
         public override Color GetTint()
         {
-            SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
-            _onError = errorProp.boolValue;
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
 
-            if (_onError)
-                return new Color(0.5f, 0, 0);
+            if (enabled)
+            {
+                SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
+                _onError = errorProp.boolValue;
+
+                if (_onError)
+                    return new Color(0.5f, 0, 0);
+                else
+                    return NodeEditorPreferences.GetSettings().tintColor;
+            }
             else
-                return NodeEditorPreferences.GetSettings().tintColor;
+            {
+                return new Color(0.1f, 0.1f, 0.1f);
+            }
         }
     }
 }

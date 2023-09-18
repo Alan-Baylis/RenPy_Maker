@@ -7,4 +7,9 @@ public class RenpyMakerEditor : NodeGraphEditor
     {
         return null;
     }
+    
+    public override void OnDropObjects(UnityEngine.Object[] objects)
+    {
+        
+    }
 }

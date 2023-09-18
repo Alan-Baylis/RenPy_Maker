@@ -3,6 +3,8 @@
 [CreateNodeMenu("Nodes/Character")]
 public class CharacterNode : BaseNode
 {
+    public bool enabled = true;
+
     public string character;
     [HideInInspector]
     public string previousName;
@@ -10,6 +12,23 @@ public class CharacterNode : BaseNode
     public Color color = Color.white;
     [HideInInspector]
     public bool errorStatus;
+
+    private int _nodeId;
+
+    public override bool GetEnabledStatus()
+    {
+        return enabled;
+    }
+
+    public override void SetNodeId(int id)
+    {
+        _nodeId = id;
+    }
+
+    public override int GetNodeId()
+    {
+        return _nodeId;
+    }
 
     public override string GetCharacter()
     {

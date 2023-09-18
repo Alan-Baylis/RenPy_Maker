@@ -7,6 +7,8 @@ public class MusicNode : BaseNode
 {
     [Input] public int entry;
 
+    public bool enabled = true;
+
     public AudioClip source;
     public float fadein;
     public float fadeout;
@@ -16,6 +18,23 @@ public class MusicNode : BaseNode
     private bool evaluated;
     private List<string> labels = new List<string>();
     
+    private int _nodeId;
+
+    public override bool GetEnabledStatus()
+    {
+        return enabled;
+    }
+
+    public override void SetNodeId(int id)
+    {
+        _nodeId = id;
+    }
+
+    public override int GetNodeId()
+    {
+        return _nodeId;
+    }
+
     private void Reset()
     {
         this.AddDynamicOutput(typeof(int), ConnectionType.Override, TypeConstraint.None, "exit");

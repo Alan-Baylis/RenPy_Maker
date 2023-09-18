@@ -26,22 +26,23 @@ namespace XNodeEditor
 
             if (_narrateNode.initialized)
                 return;
+            
             _narrateNode.initialized = true;
             
-            RenpyMaker graph = _narrateNode.graph as RenpyMaker;
-            List<string> set = graph.GetCharacterList();
-
-            if (_narrateNode.GetCharacterIndex() < set.Count)
+            GameObject renpymaker = GameObject.Find("RenPy Maker");
+            NodeParser nodeParser = renpymaker.GetComponent("NodeParser") as NodeParser;
+            List<BaseNode> nodes = new List<BaseNode>();
+            nodes = nodeParser.GetNodeList("CharacterNode");
+            List<string> set = new List<string>();
+            foreach (BaseNode c in nodes)
             {
-                foreach (BaseNode n in graph.nodes)
+                if (c.GetNodeType() == "CharacterNode") 
                 {
-                    if (n.GetNodeType() == "CharacterNode" && set[_narrateNode.GetCharacterIndex()] == n.GetCharacter())
-                    {
-                        _narrateNode.character = n.GetCharacter();
-                        _narrateNode.color = n.GetColor();
-                        _narrateNode.image = n.GetImage();
-                        break;
-                    }
+                    CharacterNode characterNode = c as CharacterNode;
+                    _narrateNode.character = characterNode.GetCharacter();
+                    _narrateNode.color = characterNode.GetColor();
+                    _narrateNode.image = characterNode.GetImage();
+                    break;
                 }
             }
         }
@@ -55,16 +56,31 @@ namespace XNodeEditor
             
             serializedObject.Update();
 
-            RenpyMaker graph = _narrateNode.graph as RenpyMaker;
-            List<string> set = graph.GetCharacterList();
+            GameObject renpymaker = GameObject.Find("RenPy Maker");
+            NodeParser nodeParser = renpymaker.GetComponent("NodeParser") as NodeParser;
+            List<BaseNode> nodes = new List<BaseNode>();
+            nodes = nodeParser.GetNodeList("CharacterNode");
+            List<string> set = new List<string>();
+            foreach (BaseNode c in nodes)
+            {
+                if (c.GetNodeType() == "CharacterNode") 
+                {
+                    CharacterNode characterNode = c as CharacterNode;
+                    set.Add(characterNode.character);
+                }
+            }
 
+            GUILayout.BeginHorizontal();
+            EditorGUIUtility.labelWidth = 65;
+            EditorGUILayout.PrefixLabel("Character");
             EditorGUI.BeginChangeCheck();
             _narrateNode.SetCharacterIndex(EditorGUILayout.Popup(_narrateNode.GetCharacterIndex(), set.ToArray()));
+            GUILayout.EndHorizontal();
             if (EditorGUI.EndChangeCheck())
             {
                 if (_narrateNode.GetCharacterIndex() < set.Count)
                 {
-                    foreach (BaseNode n in _narrateNode.graph.nodes)
+                    foreach (BaseNode n in nodes)
                     {
                         if (n.GetNodeType() == "CharacterNode" &&
                             set[_narrateNode.GetCharacterIndex()] == n.GetCharacter())
@@ -99,15 +115,43 @@ namespace XNodeEditor
             }
         }
         
+        public void SetEnabledState(bool state)
+        {
+            _narrateNode.enabled = state;
+        }
+
+        public override void AddContextMenuItems(GenericMenu menu)
+        {
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
+
+            if (enabled)
+                menu.AddItem(new GUIContent("Disable"), false, () => SetEnabledState(false));
+            else
+                menu.AddItem(new GUIContent("Enable"), false, () => SetEnabledState(true));
+
+            base.AddContextMenuItems(menu);
+        }
+
         public override Color GetTint()
         {
-            SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
-            _onError = errorProp.boolValue;
+            SerializedProperty enabledProp = serializedObject.FindProperty("enabled");
+            bool enabled = enabledProp.boolValue;
 
-            if (_onError)
-                return new Color(0.5f, 0, 0);
+            if (enabled)
+            {
+                SerializedProperty errorProp = serializedObject.FindProperty("errorStatus");
+                _onError = errorProp.boolValue;
+
+                if (_onError)
+                    return new Color(0.5f, 0, 0);
+                else
+                    return NodeEditorPreferences.GetSettings().tintColor;
+            }
             else
-                return NodeEditorPreferences.GetSettings().tintColor;
+            {
+                return new Color(0.1f, 0.1f, 0.1f);
+            }
         }
     }
 }
