@@ -571,8 +571,6 @@ public class NodeParser : MonoBehaviour
                     
                     List<MenuNode.MenuOption> optionList = node.GetMenuOptions();
                     
-                    Debug.Log(optionList.Count);
-                    
                     for (int i = 0; i < optionList.Count(); i++)
                     {
                         activeAndInactiveButtons[i].gameObject.SetActive(true);
