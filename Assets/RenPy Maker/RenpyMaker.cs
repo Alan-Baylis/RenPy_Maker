@@ -27,6 +27,14 @@ public class RenpyMaker : NodeGraph
 	private NodeParser _nodeParser;
 	private List<BaseNode> _nodes;
 
+	[ContextMenu("Toggle Tracking")]
+	void ToggleNodeTracking()
+	{
+		GameObject renpymaker = GameObject.Find("RenPy Maker");
+		_nodeParser = renpymaker.GetComponent<NodeParser>();
+		_nodeParser.ToggleTracking();
+	}
+	
 	[ContextMenu("Make Ren'Py Script")]
 	void MakeRenpyScript()
 	{

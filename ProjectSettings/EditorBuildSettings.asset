@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/RenPy Maker.unity
+    guid: 9528f935e59797d4f8ab7c6f01d70517
   m_configObjects: {}

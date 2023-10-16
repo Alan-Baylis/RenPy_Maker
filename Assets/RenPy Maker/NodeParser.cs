@@ -23,7 +23,6 @@ public class NodeParser : MonoBehaviour
     private List<RenpyMaker> graphStack = new List<RenpyMaker>();
 
     public string projectName = "";
-    public Color speakerColor;
     public TMP_Text speaker;
     public TMP_Text dialogue;
     public GameObject images;
@@ -34,6 +33,8 @@ public class NodeParser : MonoBehaviour
     public RenpyMaker graph;
     [HideInInspector]
     public int _resolutionIndex;
+    
+    private bool enableTracking = true;
     private List<string> resolutions = new List<string> {"1066x600", "1280x720", "1920x1080", "2560x1440", "3840x2160"};
     private List<Texture2D> _textures = new List<Texture2D>();
     private List<string> _positions = new List<string>();
@@ -115,6 +116,25 @@ public class NodeParser : MonoBehaviour
     {
     }
 
+    public void ToggleTracking()
+    {
+        enableTracking = !enableTracking;
+    }
+    
+    public void UpdateNodeEditorWindow()
+    {
+#if UNITY_EDITOR
+        NodeEditorWindow window = NodeEditorWindow.current;
+        window.titleContent = new GUIContent(graph.name);
+        
+        if (Selection.count == 1 && enableTracking == true)
+        {
+            Vector2 nodeDimension = new Vector2(100, 150);
+            NodeEditorWindow.current.panOffset = -graph.current.position - nodeDimension;
+        }
+#endif        
+    }
+    
     public void Start()
     {
         TestArea();
@@ -125,53 +145,40 @@ public class NodeParser : MonoBehaviour
         graph.current = null;
         
 #if UNITY_EDITOR
-        if (Selection.count == 1) // Try to start from selected node
+        // Try to start from selected node
+        if (Selection.count == 1)
         {
             List<UnityEngine.Object> selectionCache;
             selectionCache = new List<UnityEngine.Object>(Selection.objects);
-            int index;
-            string resourcesFolder = Application.dataPath;
-            resourcesFolder += "/RenPy Maker/Resources/";
-            string[] directories = Directory.GetDirectories(resourcesFolder, "*", SearchOption.AllDirectories);
-            
-            foreach (string item in directories)
+
+            UnityEngine.Object[] assets = Resources.LoadAll(projectName);
+
+            foreach (UnityEngine.Object asset in assets)
             {
-                if (Path.GetFileName(item) == projectName)
+                if (asset.GetType() == typeof(RenpyMaker))
                 {
-                    DirectoryInfo folder = new DirectoryInfo(item);
-                    var files = folder.GetFiles("*.asset");
+                    RenpyMaker newGraph = asset as RenpyMaker;
 
-                    for (int i = 0; i < files.Length; i++)
+                    if (newGraph != null)
                     {
-                        index = 0;
-                        RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
-                        if (newGraph != null)
+                        foreach (BaseNode node in newGraph.nodes)
                         {
-                            NodeEditorWindow window = NodeEditorWindow.current;
-                            window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
-                            graph = newGraph;
-
-                            foreach (BaseNode node in graph.nodes)
+                            if (selectionCache.Contains(node))
                             {
-                                // Skip these types of nodes
-                                if (node == null || node.GetNodeType() == "CharacterNode")
+                                Debug.Log("Starting from selected node");
+                                
+                                if (enableTracking)
                                 {
-                                    index++;
-                                    continue;
+                                    NodeEditorWindow window = NodeEditorWindow.current;
+                                    window.graph = newGraph;
                                 }
+                                graph = newGraph;
+                                graph.current = node;
+                                UpdateNodeEditorWindow();
 
-                                if (selectionCache.Contains(graph.nodes[index]))
-                                {
-                                    Debug.Log("Starting from selected node");
-
-                                    graph.current = node;
-
-                                    StopLastCoroutine();
-                                    _parser = StartCoroutine(ParseNode());
-                                    return;
-                                }
-
-                                index++;
+                                StopLastCoroutine();
+                                _parser = StartCoroutine(ParseNode());
+                                return;
                             }
                         }
                     }
@@ -185,52 +192,45 @@ public class NodeParser : MonoBehaviour
     public void FindStart()
     {
         graph.current = null;
+        
+        UnityEngine.Object[] assets = Resources.LoadAll(projectName);
 
-#if UNITY_EDITOR        
-        string resourcesFolder = Application.dataPath;
-        resourcesFolder += "/RenPy Maker/Resources/";
-        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
-        foreach (string item in directories)
+        foreach (UnityEngine.Object asset in assets)
         {
-            if (Path.GetFileName(item) == projectName)
+            if (asset.GetType() == typeof(RenpyMaker))
             {
-                DirectoryInfo folder = new DirectoryInfo(item);
-                var files = folder.GetFiles("*.asset");
+                RenpyMaker newGraph = asset as RenpyMaker;
 
-                for (int i = 0; i < files.Length; i++)
+                if (newGraph != null)
                 {
-                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
-                    if (newGraph != null)
+                    foreach (BaseNode n in newGraph.nodes)
                     {
-                        NodeEditorWindow window = NodeEditorWindow.current;
-                        window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
-                        graph = newGraph;
-
-                        foreach (BaseNode n in graph.nodes)
+                        if (n.GetNodeType() == "StartNode")
                         {
-                            if (n.GetNodeType() == "StartNode")
+#if UNITY_EDITOR                                
+                            if (enableTracking)
                             {
-                                graph.current = n;
-
-                                NextNode("exit");
-                                return;
+                                NodeEditorWindow window = NodeEditorWindow.current;
+                                window.graph = newGraph;
                             }
+#endif
+                            graph = newGraph;
+                            graph.current = n;
+                            UpdateNodeEditorWindow();
+
+                            NextNode("exit");
+                            return;
                         }
                     }
                 }
             }
         }
-#endif
 
         Debug.LogError("Unable to find the Start node");
     }
     
     public void CallLabel(string labelName)
     {
-#if UNITY_EDITOR
-//        if (graph.ErrorCheck())
-//            return;
-
         if (string.IsNullOrEmpty(labelName))
         {
             Debug.LogError("Missing label name");
@@ -240,34 +240,33 @@ public class NodeParser : MonoBehaviour
         nodeStack.Add(graph.current);
         graphStack.Add(graph);
         
-        string resourcesFolder = Application.dataPath;
-        resourcesFolder += "/RenPy Maker/Resources/";
-        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
-        foreach (string item in directories)
+        UnityEngine.Object[] assets = Resources.LoadAll(projectName);
+
+        foreach (UnityEngine.Object asset in assets)
         {
-            if (Path.GetFileName(item) == projectName)
+            if (asset.GetType() == typeof(RenpyMaker))
             {
-                DirectoryInfo folder = new DirectoryInfo(item);
-                var files = folder.GetFiles("*.asset");
+                RenpyMaker newGraph = asset as RenpyMaker;
 
-                for (int i = 0; i < files.Length; i++)
+                if (newGraph != null)
                 {
-                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
-                    if (newGraph != null)
+                    foreach (BaseNode n in newGraph.nodes)
                     {
-                        NodeEditorWindow window = NodeEditorWindow.current;
-                        window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
-                        graph = newGraph;
-
-                        foreach (BaseNode n in graph.nodes)
+                        if (n.GetNodeType() == "LabelNode" && n.GetString() == labelName)
                         {
-                            if (n.GetNodeType() == "LabelNode" && n.GetString() == labelName)
+#if UNITY_EDITOR                                
+                            if (enableTracking)
                             {
-                                graph.current = n;
-                                
-                                NextNode("exit");
-                                return;
+                                NodeEditorWindow window = NodeEditorWindow.current;
+                                window.graph = newGraph;
                             }
+#endif
+                            graph = newGraph;
+                            graph.current = n;
+                            UpdateNodeEditorWindow();
+                            
+                            NextNode("exit");
+                            return;
                         }
                     }
                 }
@@ -275,64 +274,43 @@ public class NodeParser : MonoBehaviour
         }
 
         Debug.LogError("Unable to find the Label node");
-#endif
     }
 
     public void JumpLabel(string labelName)
     {
-#if UNITY_EDITOR
-//        if (graph.ErrorCheck())
-//            return;
-
         if (string.IsNullOrEmpty(labelName))
         {
             Debug.LogError("Missing label name");
             return;
         }
 
+        UnityEngine.Object[] assets = Resources.LoadAll(projectName);
+        
         if (labelName == "start")
         {
-            NodeEditorWindow window = NodeEditorWindow.current;
-            window.graph = Resources.Load(projectName + "/" + graph.name) as NodeGraph;                
-            List<BaseNode> nodes = GetNodeList("All");
-
-            foreach (BaseNode n in nodes)
+            foreach (UnityEngine.Object asset in assets)
             {
-                if (n.GetNodeType() == "StartNode")
+                if (asset.GetType() == typeof(RenpyMaker))
                 {
-                    graph.current = n;
+                    RenpyMaker newGraph = asset as RenpyMaker;
 
-                    NextNode("exit");
-                    return;
-                }
-            }
-        }
-
-        string resourcesFolder = Application.dataPath;
-        resourcesFolder += "/RenPy Maker/Resources/";
-        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
-        foreach (string item in directories)
-        {
-            if (Path.GetFileName(item) == projectName)
-            {
-                DirectoryInfo folder = new DirectoryInfo(item);
-                var files = folder.GetFiles("*.asset");
-
-                for (int i = 0; i < files.Length; i++)
-                {
-                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
                     if (newGraph != null)
                     {
-                        NodeEditorWindow window = NodeEditorWindow.current;
-                        window.graph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as NodeGraph;
-                        graph = newGraph;
-
-                        foreach (BaseNode n in graph.nodes)
+                        foreach (BaseNode n in newGraph.nodes)
                         {
-                            if (n.GetNodeType() == "LabelNode" && n.GetString() == labelName)
+                            if (n.GetNodeType() == "StartNode")
                             {
+#if UNITY_EDITOR                                
+                                if (enableTracking)
+                                {
+                                    NodeEditorWindow window = NodeEditorWindow.current;
+                                    window.graph = newGraph;
+                                }
+#endif
+                                graph = newGraph;
                                 graph.current = n;
-                                
+                                UpdateNodeEditorWindow();
+
                                 NextNode("exit");
                                 return;
                             }
@@ -342,48 +320,72 @@ public class NodeParser : MonoBehaviour
             }
         }
 
-        Debug.LogError("Unable to find the Label node");
+        foreach (UnityEngine.Object asset in assets)
+        {
+            if (asset.GetType() == typeof(RenpyMaker))
+            {
+                RenpyMaker newGraph = asset as RenpyMaker;
+
+                if (newGraph != null)
+                {
+                    foreach (BaseNode n in newGraph.nodes)
+                    {
+                        if (n.GetNodeType() == "LabelNode" && n.GetString() == labelName)
+                        {
+#if UNITY_EDITOR                                
+                            if (enableTracking)
+                            {
+                                NodeEditorWindow window = NodeEditorWindow.current;
+                                window.graph = newGraph;
+                            }
 #endif
+                            graph = newGraph;
+                            graph.current = n;
+                            UpdateNodeEditorWindow();
+                            
+                            NextNode("exit");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        Debug.LogError("Unable to find the Label node");
     }
 
     public List<BaseNode> GetNodeList(string nodeType)
     {
         List<BaseNode> nodes = new List<BaseNode>();
-       
-        string resourcesFolder = Application.dataPath;
-        resourcesFolder += "/RenPy Maker/Resources/";
-        string[] directories = Directory.GetDirectories(resourcesFolder,"*",SearchOption.AllDirectories);
-        //Debug.Log(directories.Length);
-        foreach (string item in directories)
-        {
-            if (Path.GetFileName(item) == projectName)
-            {
-                DirectoryInfo folder = new DirectoryInfo(item);
-                var files = folder.GetFiles("*.asset");
 
-                for (int i = 0; i < files.Length; i++)
+        UnityEngine.Object[] assets = Resources.LoadAll(projectName);
+
+        foreach (UnityEngine.Object asset in assets)
+        {
+            if (asset.GetType() == typeof(RenpyMaker))
+            {
+                RenpyMaker newGraph = asset as RenpyMaker;
+                
+                if (newGraph != null)
                 {
-                    RenpyMaker newGraph = Resources.Load(projectName + "/" + Path.GetFileNameWithoutExtension(files[i].Name)) as RenpyMaker;
-                    if (newGraph != null)
+                    foreach (BaseNode n in newGraph.nodes)
                     {
-                        foreach (BaseNode n in newGraph.nodes)
+                        if (n.GetEnabledStatus())
                         {
-                            if (n.GetEnabledStatus())
+                            if (nodeType == "All")
                             {
-                                if (nodeType == "All")
-                                {
-                                    nodes.Add(n);
-                                }
-                                else if (n.GetNodeType() == nodeType)
-                                {
-                                    nodes.Add(n);
-                                }
+                                nodes.Add(n);
+                            }
+                            else if (n.GetNodeType() == nodeType)
+                            {
+                                nodes.Add(n);
                             }
                         }
                     }
                 }
             }
-        }        
+        }
+        
         return nodes;
     }
 
@@ -398,8 +400,6 @@ public class NodeParser : MonoBehaviour
 #endif
 
         string theNodeType = node.GetNodeType();
-        string theCharacter = node.GetCharacter();
-        string theDialogue = node.GetDialogue();
 
         if (node.GetEnabledStatus() == false)
         {
@@ -427,10 +427,9 @@ public class NodeParser : MonoBehaviour
 
                 case "DialogueNode":
                 {
-                    speaker.text = theCharacter;
-                    speakerColor = node.GetColor();
-                    speaker.color = speakerColor;
-                    dialogue.text = theDialogue;
+                    speaker.text = node.GetCharacter();
+                    speaker.color = node.GetColor();
+                    dialogue.text = node.GetDialogue();
                     dialogue.fontStyle = FontStyles.Normal;
                     _speakerTexture = node.GetImage();
                     speakerImage.overrideSprite = Sprite.Create(_speakerTexture,
@@ -438,7 +437,7 @@ public class NodeParser : MonoBehaviour
 
                     yield return new WaitUntil(() => Mouse.current.leftButton.wasPressedThisFrame);
                     yield return new WaitUntil(() => Mouse.current.leftButton.wasReleasedThisFrame);
-
+                    
                     NextNode("exit");
 
                     break;
@@ -530,24 +529,6 @@ public class NodeParser : MonoBehaviour
 
                 case "JumpNode":
                 {
-/*                
-                string jumpLabel = graph.current.GetString();
-
-                foreach (BaseNode n in graph.nodes)
-                {
-                    if (n.GetNodeType() == "LabelNode")
-                    {
-                        if (n.GetString() == jumpLabel)
-                        {
-                            graph.current = n;
-                            break;
-                        }
-                    }
-                }
-
-                StopLastCoroutine();
-                _parser = StartCoroutine(ParseNode());
-*/
                     JumpLabel(node.GetString());
 
                     break;
@@ -562,10 +543,9 @@ public class NodeParser : MonoBehaviour
 
                 case "MenuNode":
                 {
-                    speaker.text = theCharacter;
-                    speakerColor = node.GetColor();
-                    speaker.color = speakerColor;
-                    dialogue.text = theDialogue;
+                    speaker.text = node.GetCharacter();
+                    speaker.color = node.GetColor();
+                    dialogue.text = node.GetDialogue();
                     dialogue.fontStyle = FontStyles.Normal;
                     _speakerTexture = node.GetImage();
                     speakerImage.overrideSprite = Sprite.Create(_speakerTexture,
@@ -617,9 +597,8 @@ public class NodeParser : MonoBehaviour
                 case "NarrateNode":
                 {
                     speaker.text = "";
-                    speakerColor = node.GetColor();
-                    speaker.color = speakerColor;
-                    dialogue.text = theDialogue;
+                    speaker.color = node.GetColor();
+                    dialogue.text = node.GetDialogue();
                     dialogue.fontStyle = FontStyles.Italic;
                     _speakerTexture = node.GetImage();
                     speakerImage.overrideSprite = Sprite.Create(_speakerTexture,
@@ -659,10 +638,11 @@ public class NodeParser : MonoBehaviour
 
                 case "ReturnNode":
                 {
-#if UNITY_EDITOR
                     if (graphStack.Count == 0)
                     {
+#if UNITY_EDITOR                        
                         FindStart();
+#endif                        
                     }
                     else
                     {
@@ -670,13 +650,17 @@ public class NodeParser : MonoBehaviour
                         graph.current = nodeStack[nodeStack.Count - 1];
                         graphStack.RemoveAt(graphStack.Count - 1);
                         nodeStack.RemoveAt(nodeStack.Count - 1);
+#if UNITY_EDITOR
                         NodeEditorWindow window = NodeEditorWindow.current;
                         window.graph = Resources.Load(projectName + "/" + graph.name) as NodeGraph;
-                        NextNode("exit");
-                    }
-#else
-                ExitApplication();
 #endif
+                        NextNode("exit");
+                        
+                        break;
+                    }
+                    
+                    ExitApplication();
+                    
                     break;
                 }
 
@@ -688,6 +672,7 @@ public class NodeParser : MonoBehaviour
                     _sceneTexture = node.GetImage();
                     sceneImage.overrideSprite = Sprite.Create(_sceneTexture,
                         new Rect(0, 0, _sceneTexture.width, _sceneTexture.height), new Vector2(0.5f, 0.5f), 100);
+                    
                     NextNode("exit");
 
                     break;
@@ -773,6 +758,7 @@ public class NodeParser : MonoBehaviour
                 case "SoundNode":
                 {
                     PlaySound(node.GetAudioSource());
+                    
                     NextNode("exit");
 
                     break;
@@ -869,6 +855,7 @@ public class NodeParser : MonoBehaviour
             if (p.fieldName == fieldName)
             {
                 graph.current = p.Connection.node as BaseNode;
+                UpdateNodeEditorWindow();
                 break;
             }
         }
