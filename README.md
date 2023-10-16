@@ -13,7 +13,7 @@ Ren'Py is a very complex scripting language and creating a full set of nodes and
 https://www.patreon.com/user?u=9912327
 
 
-Planned features for the full version of Ren'Py Maker:
+Planned features for the Pro version of Ren'Py Maker:
 Node grouping with custom colors,
 Inventory system,
 Image maps,
@@ -28,8 +28,6 @@ Advanced error/logic checking,
 Dynamic help/tooltips,
 Multi nodes combining Scene, Show and Dialog,
 Language selection
-
-
 Planned features for the Ren'Py Maker Pro version:
 Export all to Ren'Py project option,
 Image library for inventory (Drag & Drop),
