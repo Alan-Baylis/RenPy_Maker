@@ -552,17 +552,27 @@ public class NodeParser : MonoBehaviour
                         new Rect(0, 0, _speakerTexture.width, _speakerTexture.height), new Vector2(0.5f, 0.5f), 100);
 
                     _indexButtonPressed = 0;
-                    List<Button> activeAndInactiveButtons = GameObject.FindObjectsOfType<Button>(true).ToList();
+                    List<Button> activeAndInactiveButtons = FindObjectsOfType<Button>(true).ToList();
                     activeAndInactiveButtons = activeAndInactiveButtons.OrderBy(go => go.name).ToList();
+
+                    // Quick hack, update this later
+                    int exitButtonIndex = 0;
+                    for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
+                    {
+                        if (activeAndInactiveButtons[i].gameObject.name == "Exit")
+                            exitButtonIndex = i;
+                    }
+                    activeAndInactiveButtons.RemoveAt(exitButtonIndex);
 
                     for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
                     {
-                        if (activeAndInactiveButtons[i].gameObject.name != "Exit")
-                            activeAndInactiveButtons[i].gameObject.SetActive(false);
+                        activeAndInactiveButtons[i].gameObject.SetActive(false);
                     }
-
+                    
                     List<MenuNode.MenuOption> optionList = node.GetMenuOptions();
-
+                    
+                    Debug.Log(optionList.Count);
+                    
                     for (int i = 0; i < optionList.Count(); i++)
                     {
                         activeAndInactiveButtons[i].gameObject.SetActive(true);
@@ -572,15 +582,14 @@ public class NodeParser : MonoBehaviour
                     // Show relevant buttons 
                     yield return new WaitUntil(() => _indexButtonPressed != 0);
 
-                    NextNode(optionList[_indexButtonPressed - 1].option);
-
                     // Hide all buttons
                     for (int i = 0; i < activeAndInactiveButtons.Count(); i++)
                     {
-                        if (activeAndInactiveButtons[i].gameObject.name != "Exit")
-                            activeAndInactiveButtons[i].gameObject.SetActive(false);
+                        activeAndInactiveButtons[i].gameObject.SetActive(false);
                     }
 
+                    NextNode(optionList[_indexButtonPressed - 1].option);
+                    
                     break;
                 }
 
