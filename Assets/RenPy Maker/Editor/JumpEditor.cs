@@ -1,7 +1,8 @@
 using UnityEditor;
 using UnityEngine;
+using XNodeEditor;
 
-namespace XNodeEditor
+namespace RenPy_Maker
 {
     [CustomNodeEditor(typeof(JumpNode))]
     public class JumpEditor : NodeEditor

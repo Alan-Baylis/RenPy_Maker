@@ -1,26 +1,31 @@
 ﻿using UnityEditor;
+using XNodeEditor;
 
-[CustomEditor(typeof(NodeParser))]
-public class NodeParserEditor : Editor
+namespace RenPy_Maker
 {
-    private int _choiceIndex;
-    private NodeParser _nodeParser;
-
-    public override void OnInspectorGUI ()
+    [CustomEditor(typeof(NodeParser))]
+    public class NodeParserEditor : Editor
     {
-        if (_nodeParser == null)
-        {
-            _nodeParser = target as NodeParser;
-        }
+        private int _choiceIndex;
+        private NodeParser _nodeParser;
 
-        _choiceIndex = _nodeParser.GetResolutionIndex();
-        EditorGUILayout.PrefixLabel("Ren'Py Resolution");
-        EditorGUI.BeginChangeCheck();
-        _choiceIndex = EditorGUILayout.Popup(_choiceIndex, _nodeParser.GetResolutions().ToArray());
-        if (EditorGUI.EndChangeCheck())
+        public override void OnInspectorGUI()
         {
-            _nodeParser.SetResolutonIndex(_choiceIndex);
+            if (_nodeParser == null)
+            {
+                _nodeParser = target as NodeParser;
+            }
+
+            _choiceIndex = _nodeParser.GetResolutionIndex();
+            EditorGUILayout.PrefixLabel("Ren'Py Resolution");
+            EditorGUI.BeginChangeCheck();
+            _choiceIndex = EditorGUILayout.Popup(_choiceIndex, _nodeParser.GetResolutions().ToArray());
+            if (EditorGUI.EndChangeCheck())
+            {
+                _nodeParser.SetResolutonIndex(_choiceIndex);
+            }
+
+            DrawDefaultInspector();
         }
-        DrawDefaultInspector();
     }
 }

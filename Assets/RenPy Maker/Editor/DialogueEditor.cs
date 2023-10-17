@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using XNodeEditor;
 
-namespace XNodeEditor
+namespace RenPy_Maker
 {
     [CustomNodeEditor(typeof(DialogueNode))]
     public class DialogueEditor : NodeEditor

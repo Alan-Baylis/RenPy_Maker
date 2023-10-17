@@ -1,7 +1,8 @@
 using UnityEditor;
 using UnityEngine;
+using XNodeEditor;
 
-namespace XNodeEditor
+namespace RenPy_Maker
 {
     [CustomNodeEditor(typeof(SoundNode))]
     public class SoundEditor : NodeEditor

@@ -1,7 +1,8 @@
 using UnityEditor;
 using UnityEngine;
+using XNodeEditor;
 
-namespace XNodeEditor
+namespace RenPy_Maker
 {
     [CustomNodeEditor(typeof(LabelNode))]
     public class LabelEditor : NodeEditor

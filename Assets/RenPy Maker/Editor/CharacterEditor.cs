@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using XNodeEditor;
 
-namespace XNodeEditor
+namespace RenPy_Maker
 {
     [CustomNodeEditor(typeof(CharacterNode))]
     public class CharacterEditor : NodeEditor

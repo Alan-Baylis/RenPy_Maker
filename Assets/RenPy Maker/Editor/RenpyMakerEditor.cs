@@ -1,15 +1,18 @@
 using XNodeEditor;
 
-[CustomNodeGraphEditor(typeof(RenpyMaker), "RenpyMaker.Settings")]
-public class RenpyMakerEditor : NodeGraphEditor
+namespace RenPy_Maker
 {
-    public override string GetPortTooltip(XNode.NodePort port)
+    [CustomNodeGraphEditor(typeof(RenpyMaker), "RenpyMaker.Settings")]
+    public class RenpyMakerEditor : NodeGraphEditor
     {
-        return null;
-    }
-    
-    public override void OnDropObjects(UnityEngine.Object[] objects)
-    {
-        
+        public override string GetPortTooltip(XNode.NodePort port)
+        {
+            return null;
+        }
+
+        public override void OnDropObjects(UnityEngine.Object[] objects)
+        {
+
+        }
     }
 }
