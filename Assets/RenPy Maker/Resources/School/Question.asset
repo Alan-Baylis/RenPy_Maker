@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Start
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -520, y: -408}
+  position: {x: -296, y: -392}
   ports:
     keys:
     - exit
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: 155, y: 38.5}
+  position: {x: 376, y: 40}
   ports:
     keys:
     - exit
@@ -103,7 +103,7 @@ MonoBehaviour:
   m_Name: Stop Music
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: 216, y: -184}
+  position: {x: 440, y: -168}
   ports:
     keys:
     - exit
@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Name: Scene
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -520, y: -328}
+  position: {x: -296, y: -312}
   ports:
     keys:
     - exit
@@ -197,7 +197,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: 392, y: 40}
+  position: {x: 616, y: 56}
   ports:
     keys:
     - exit
@@ -249,7 +249,7 @@ MonoBehaviour:
   m_Name: Call
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -24, y: -296}
+  position: {x: 200, y: -280}
   ports:
     keys:
     - exit
@@ -325,7 +325,7 @@ MonoBehaviour:
   m_Name: Label
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -280, y: -200}
+  position: {x: -56, y: -184}
   ports:
     keys:
     - exit
@@ -372,7 +372,7 @@ MonoBehaviour:
   m_Name: Menu
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -280, y: -88}
+  position: {x: -56, y: -72}
   ports:
     keys:
     - entry
@@ -458,7 +458,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -280, y: -408}
+  position: {x: -56, y: -392}
   ports:
     keys:
     - exit
@@ -510,7 +510,7 @@ MonoBehaviour:
   m_Name: Jump
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: 328, y: -312}
+  position: {x: 552, y: -296}
   ports:
     keys:
     - entry
@@ -544,7 +544,7 @@ MonoBehaviour:
   m_Name: Show
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -520, y: -216}
+  position: {x: -296, y: -200}
   ports:
     keys:
     - exit
@@ -597,7 +597,7 @@ MonoBehaviour:
   m_Name: Call
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -24, y: -408}
+  position: {x: 200, y: -392}
   ports:
     keys:
     - exit
@@ -644,7 +644,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -520, y: 120}
+  position: {x: -296, y: 136}
   ports:
     keys:
     - exit
@@ -696,7 +696,7 @@ MonoBehaviour:
   m_Name: Call
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -24, y: -184}
+  position: {x: 200, y: -168}
   ports:
     keys:
     - exit
@@ -743,7 +743,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -520, y: -88}
+  position: {x: -296, y: -72}
   ports:
     keys:
     - exit

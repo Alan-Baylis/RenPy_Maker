@@ -36,6 +36,7 @@ namespace RenPy_Maker
         [HideInInspector] public int _resolutionIndex;
 
         private bool enableTracking = true;
+        private bool enableDebugging = false;
 
         private List<string> resolutions = new List<string>
             { "1066x600", "1280x720", "1920x1080", "2560x1440", "3840x2160" };
@@ -60,6 +61,8 @@ namespace RenPy_Maker
             _window.titleContent.text = "Ren'Py Maker";
             _window.wantsMouseMove = true;
             _window.Show();
+            
+            RenpyMaker.initialized = false;
 #endif
         }
 
@@ -125,6 +128,12 @@ namespace RenPy_Maker
             enableTracking = !enableTracking;
         }
 
+        public void ToggleDebugging()
+        {
+            // Todo: Update this to show the current state of enableDebugging
+            enableDebugging = !enableDebugging;
+        }
+
         public void UpdateNodeEditorWindow()
         {
 #if UNITY_EDITOR
@@ -150,7 +159,7 @@ namespace RenPy_Maker
 
 #if UNITY_EDITOR
             // Try to start from selected node
-            if (Selection.count == 1)
+            if (Selection.count == 1 && enableDebugging == true)
             {
                 List<UnityEngine.Object> selectionCache;
                 selectionCache = new List<UnityEngine.Object>(Selection.objects);

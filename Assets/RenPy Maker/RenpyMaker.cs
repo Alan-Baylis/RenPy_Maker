@@ -8,6 +8,7 @@ using XNode;
 using ColorUtility = UnityEngine.ColorUtility;
 
 #if UNITY_EDITOR
+using XNodeEditor;
 using UnityEditor;
 #endif
 
@@ -28,8 +29,50 @@ namespace RenPy_Maker
 		private int optionIndex;
 		private NodeParser _nodeParser;
 		private List<BaseNode> _nodes;
+		public static bool initialized;
+		private static NodeGraph _currentGraph;
+		private float _zoom;
+		private Vector2 _panOffset;
 
-		[ContextMenu("Toggle Tracking")]
+		private void OnEnable()
+		{
+#if UNITY_EDITOR
+			EditorApplication.update += OnEditorUpdate;
+#endif
+		}
+
+		private void OnDisable()
+		{
+#if UNITY_EDITOR
+			EditorApplication.update -= OnEditorUpdate;
+#endif
+		}
+
+		private void OnEditorUpdate()
+		{
+#if UNITY_EDITOR
+			if (!initialized)
+			{
+				_currentGraph = NodeEditorWindow.current.graph;
+				
+				initialized = true;
+			}
+
+			if (_currentGraph != NodeEditorWindow.current.graph)
+			{
+				RenpyMaker tempGraph = _currentGraph as RenpyMaker;
+				tempGraph._zoom = NodeEditorWindow.current.zoom;
+				tempGraph._panOffset = NodeEditorWindow.current.panOffset;
+				tempGraph = NodeEditorWindow.current.graph as RenpyMaker;
+				NodeEditorWindow.current.zoom = tempGraph._zoom;
+				NodeEditorWindow.current.panOffset = tempGraph._panOffset;
+				_currentGraph = NodeEditorWindow.current.graph;
+				NodeEditorWindow.current.titleContent = new GUIContent(_currentGraph.name);
+			}
+#endif
+		}
+
+		[ContextMenu("Options/Toggle Tracking")]
 		void ToggleNodeTracking()
 		{
 			GameObject renpymaker = GameObject.Find("RenPy Maker");
@@ -37,6 +80,23 @@ namespace RenPy_Maker
 			_nodeParser.ToggleTracking();
 		}
 
+		[ContextMenu("Options/Toggle Debugging")]
+		void ToggleDebugging()
+		{
+			GameObject renpymaker = GameObject.Find("RenPy Maker");
+			_nodeParser = renpymaker.GetComponent<NodeParser>();
+			_nodeParser.ToggleDebugging();
+		}
+
+		[ContextMenu("Home")]
+		void CenterWindow()
+		{
+#if UNITY_EDITOR
+			NodeEditorWindow.current.zoom = 1f;
+			NodeEditorWindow.current.panOffset = new Vector2(0, 0);
+#endif
+		}
+		
 		[ContextMenu("Make Ren'Py Script")]
 		void MakeRenpyScript()
 		{

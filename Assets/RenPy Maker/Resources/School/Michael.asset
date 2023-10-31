@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Label
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -408}
+  position: {x: -104, y: -312}
   ports:
     keys:
     - exit
@@ -57,7 +57,7 @@ MonoBehaviour:
   m_Name: Return
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: 152}
+  position: {x: -104, y: 248}
   ports:
     keys:
     - entry
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Name: Show
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -184}
+  position: {x: -104, y: -88}
   ports:
     keys:
     - exit
@@ -162,7 +162,7 @@ MonoBehaviour:
   m_Name: Scene
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -296}
+  position: {x: -104, y: -200}
   ports:
     keys:
     - exit
@@ -209,7 +209,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -56}
+  position: {x: -104, y: 40}
   ports:
     keys:
     - exit

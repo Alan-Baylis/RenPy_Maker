@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Scene
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -264}
+  position: {x: -104, y: -264}
   ports:
     keys:
     - exit
@@ -60,7 +60,7 @@ MonoBehaviour:
   m_Name: Show
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -168}
+  position: {x: -104, y: -168}
   ports:
     keys:
     - exit
@@ -113,7 +113,7 @@ MonoBehaviour:
   m_Name: Return
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: 312}
+  position: {x: -104, y: 312}
   ports:
     keys:
     - entry
@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: 104}
+  position: {x: -104, y: 104}
   ports:
     keys:
     - exit
@@ -218,7 +218,7 @@ MonoBehaviour:
   m_Name: Music
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -56}
+  position: {x: -104, y: -56}
   ports:
     keys:
     - exit
@@ -267,7 +267,7 @@ MonoBehaviour:
   m_Name: Label
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -504, y: -376}
+  position: {x: -104, y: -376}
   ports:
     keys:
     - exit

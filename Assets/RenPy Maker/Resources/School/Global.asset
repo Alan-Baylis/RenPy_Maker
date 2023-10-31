@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Character
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -296, y: -408}
+  position: {x: -104, y: -168}
   ports:
     keys: []
     values: []
@@ -36,7 +36,7 @@ MonoBehaviour:
   m_Name: Character
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -72, y: -408}
+  position: {x: 120, y: -168}
   ports:
     keys: []
     values: []
@@ -59,7 +59,7 @@ MonoBehaviour:
   m_Name: Character
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -520, y: -408}
+  position: {x: -328, y: -168}
   ports:
     keys: []
     values: []
